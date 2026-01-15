@@ -181,7 +181,7 @@ proxy-groups:
   - {name: 美国自动, <<: *UrlTest, use: *Used, filter: *FilterUS}
 
 rule-providers:
-  anti-AD: {<<: *dyaml, url: https://anti-ad.net/clash.yaml, path: ./ruleset/anti-AD.yaml}
+  anti-AD: {<<: *dmrs, url: https://anti-ad.net/mihomo.mrs, path: ./ruleset/anti-AD.mrs}
   AdRules: {<<: *dmrs, url: https://adrules.top/adrules-mihomo.mrs, path: ./ruleset/AdRules.mrs}
 
 rules:
