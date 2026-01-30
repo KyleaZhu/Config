@@ -49,9 +49,9 @@ tun:
   strict-route: true
 
 hosts:
-  alive.github.com: 140.82.112.25
+  alive.github.com: 140.82.113.26
   api.github.com: 20.205.243.168
-  api.individual.githubcopilot.com: 140.82.113.22
+  api.individual.githubcopilot.com: 140.82.114.21
   avatars.githubusercontent.com: 185.199.110.133
   avatars0.githubusercontent.com: 185.199.110.133
   avatars1.githubusercontent.com: 185.199.110.133
@@ -60,34 +60,34 @@ hosts:
   avatars4.githubusercontent.com: 185.199.110.133
   avatars5.githubusercontent.com: 185.199.110.133
   camo.githubusercontent.com: 185.199.110.133
-  central.github.com: 140.82.113.21
+  central.github.com: 140.82.113.22
   cloud.githubusercontent.com: 185.199.110.133
   codeload.github.com: 20.205.243.165
-  collector.github.com: 140.82.112.22
+  collector.github.com: 140.82.114.22
   desktop.githubusercontent.com: 185.199.110.133
   favicons.githubusercontent.com: 185.199.110.133
   gist.github.com: 20.205.243.166
-  github-cloud.s3.amazonaws.com: 16.15.181.219
-  github-com.s3.amazonaws.com: 16.15.194.165
-  github-production-release-asset-2e65be.s3.amazonaws.com: 16.15.193.195
-  github-production-repository-file-5c1aeb.s3.amazonaws.com: 16.15.183.56
-  github-production-user-asset-6210df.s3.amazonaws.com: 52.216.211.81
+  github-cloud.s3.amazonaws.com: 16.15.178.45
+  github-com.s3.amazonaws.com: 16.15.199.212
+  github-production-release-asset-2e65be.s3.amazonaws.com: 16.15.179.73
+  github-production-repository-file-5c1aeb.s3.amazonaws.com: 16.15.193.79
+  github-production-user-asset-6210df.s3.amazonaws.com: 54.231.233.209
   github.blog: 192.0.66.2
   github.com: 20.205.243.166
-  github.community: 140.82.114.18
+  github.community: 140.82.114.17
   github.githubassets.com: 185.199.110.154
   github.global.ssl.fastly.net: 151.101.193.194
-  github.io: 185.199.110.153
+  github.io: 185.199.109.153
   github.map.fastly.net: 185.199.110.133
-  githubstatus.com: 185.199.110.153
-  live.github.com: 140.82.113.26
+  githubstatus.com: 185.199.109.153
+  live.github.com: 140.82.112.25
   media.githubusercontent.com: 185.199.110.133
   objects.githubusercontent.com: 185.199.110.133
   pipelines.actions.githubusercontent.com: 13.107.42.16
   raw.githubusercontent.com: 185.199.110.133
   user-images.githubusercontent.com: 185.199.110.133
   vscode.dev: 13.107.213.73
-  education.github.com: 140.82.113.22
+  education.github.com: 140.82.112.21
   private-user-images.githubusercontent.com: 185.199.110.133
 
 dns:
