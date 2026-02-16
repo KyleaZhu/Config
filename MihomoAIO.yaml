@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne_Full
 # Designer: zhvvven
 # Version: v2
-# Date: 2026-02-06
+# Date: 2026-02-16
 
 mixed-port: 7890
 unified-delay: true
@@ -35,7 +35,7 @@ sniffer:
     QUIC:
       ports: [443, 8443]
   skip-domain:
-    - 'geosite:cn,private,fakeip-filter'
+    - 'geosite:cn,private'
 
 tun:
   enable: true
@@ -102,7 +102,7 @@ dns:
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
-    - "geosite:cn,private"
+    - "geosite:cn,private,fakeip-filter"
     - "*.msftconnecttest.com"
     - "*.msftncsi.com"
   nameserver:
