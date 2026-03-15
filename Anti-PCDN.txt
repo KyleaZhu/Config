@@ -1,6 +1,6 @@
 !Title: Anti-PCDN & WebRTC Rules CN
 !Version: 20260315
-!Homepage: Custom Local Filter
+!Homepage: https://raw.githubusercontent.com/KyleaZhu/Config/main/Anti-PCDN.txt
 !Description: 屏蔽国内视频/直播平台 PCDN 与 WebRTC 流量
 
 ! =========================================================
