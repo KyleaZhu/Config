@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Custom CDN of Bilibili - 网页视频/直播换源
-// @description  内置专属优质CDN节点池 (阿里/腾讯/百度/华为)
+// @description  内置专属优质CDN节点池 (阿里/腾讯/百度/华为)。基于“鼠鼠今天吃嘉然”的原项目精简修改。
 // @namespace    CCB_Private_Lite
 // @license      MIT
 // @version      3.2.0
-// @author       KyleaZhu
+// @author       KyleaZhu (Original by 鼠鼠今天吃嘉然)
 // @run-at       document-start
 // @match        https://www.bilibili.com/video/*
 // @match        https://www.bilibili.com/festival/*
@@ -16,6 +16,13 @@
 // @grant        GM_registerMenuCommand
 // @grant        unsafeWindow
 // ==/UserScript==
+
+/*
+ * MIT License
+ * * Copyright (c) 2026 KyleaZhu (Modified version)
+ * Copyright (c) 鼠鼠今天吃嘉然 (Original CCB project)
+ * * 本脚本基于 MIT 协议开源。
+ */
 
 ;(() => {
     const defaultCdnNode = '使用默认源'
