@@ -1,10 +1,7 @@
-!Title: Anti-PCDN & WebRTC Rules (CN)
-!Version: 20260315232300
-!Last modified: Sun Mar 15 23:23:00 UTC+8 2026
-!Updated: 2026-03-15T23:23:00+08:00
-!Expires: 1 days
+!Title: Anti-PCDN & WebRTC Rules CN
+!Version: 20260315
 !Homepage: Custom Local Filter
-!Description: 屏蔽国内视频/直播平台 PCDN 与 WebRTC 流量 (分类整理版)
+!Description: 屏蔽国内视频/直播平台 PCDN 与 WebRTC 流量
 
 ! =========================================================
 ! === 1. 哔哩哔哩 (Bilibili) 专用拦截 ===
