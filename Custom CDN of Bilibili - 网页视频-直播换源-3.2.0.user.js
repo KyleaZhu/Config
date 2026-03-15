@@ -23,7 +23,7 @@
     const mainHost = 'www.bilibili.com'
     const liveHost = 'live.bilibili.com'
 
-    // 内置你提供的专属 CDN 节点池
+    // 内置 CDN 节点池
     const MY_CDN_LIST = [
         { name: "使用 B 站默认源", value: defaultCdnNode },
         { name: "阿里云 CDN (mirrorali)", value: "upos-sz-mirrorali.bilivideo.com" },
