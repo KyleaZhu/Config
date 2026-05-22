@@ -43,7 +43,7 @@ jobs:
           url = "https://github.com/xgonce/Cloudflare_IP/raw/main/result.csv"
           output_file = "bestcf/cf-proxy-ip.txt"
           
-          ALLOWED_COUNTRIES = ["HK", "SG", "JP", "US"]
+          ALLOWED_COUNTRIES = ["HK", "SG", "JP", "US", "KR", "TW"]
 
           def check_node(ip, port):
               try:
