@@ -1,7 +1,7 @@
-cdn.31514926.xyz:443#Japan家宽$sstp://vpn:vpn@n26.opengw.net:1194
-cdn.31514926.xyz:443#Japan家宽$sstp://vpn:vpn@vpn532142349.opengw.net:1394
-cdn.31514926.xyz:443#Japan家宽$sstp://vpn:vpn@vpn830143932.opengw.net:1527
-cdn.31514926.xyz:443#South Korea家宽$sstp://vpn:vpn@vpn461172806.opengw.net:995
-cdn.31514926.xyz:443#South Korea家宽$sstp://vpn:vpn@vpn152067795.opengw.net:1631
-cdn.31514926.xyz:443#South Korea家宽$sstp://vpn:vpn@vpn641679555.opengw.net:1602
-cdn.31514926.xyz:443#Canada家宽$sstp://vpn:vpn@vpn421416087.opengw.net:995
+cdn.31514926.xyz:443#Japan家宽$sstp://vpn:vpn@vpn560905336.opengw.net:995
+cdn.31514926.xyz:443#Japan家宽$sstp://vpn:vpn@vpn615658214.opengw.net:1428
+cdn.31514926.xyz:443#Japan家宽$sstp://vpn:vpn@vpn816448886.opengw.net:1598
+cdn.31514926.xyz:443#South Korea家宽$sstp://vpn:vpn@vpn546659371.opengw.net:995
+cdn.31514926.xyz:443#South Korea家宽$sstp://vpn:vpn@vpn570228437.opengw.net:1749
+cdn.31514926.xyz:443#Russia家宽$sstp://vpn:vpn@vpn667439001.opengw.net:1446
+cdn.31514926.xyz:443#United States家宽$sstp://vpn:vpn@vpn855170099.opengw.net:1843
