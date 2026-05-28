@@ -1,8 +1,6 @@
 name: Update SSTP
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -51,9 +49,11 @@ jobs:
                       asn_score = exit_data.get("asn", {}).get("abuser_score", "")
                       
                       if "Very Low" in company_score and "Very Low" in asn_score:
-                          country = exit_data.get("location", {}).get("country", "Unknown")
+                          location = exit_data.get("location", {})
+                          country_code = location.get("country_code", "Unknown")
+                          country = location.get("country", "Unknown")
                           response_time = data.get("responseTime", 999999) 
-                          formatted_link = f"cdn.31514926.xyz:443#{country}家宽${link}"
+                          formatted_link = f"{link}#{country_code}-{country}"
                           
                           return {
                               "country": country,
@@ -94,7 +94,7 @@ jobs:
                   for node in top_nodes:
                       final_nodes.append(node["formatted_link"])
 
-              print(f"\n检测与筛选完成，共保留 {len(final_nodes)} 个最优节点。")
+              print(f"\n检测与筛选完成，共保留 {len(final_nodes)} 个节点。")
 
               os.makedirs("bestcf", exist_ok=True)
               file_path = "bestcf/sstp.txt"
