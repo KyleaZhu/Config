@@ -1,4 +1,3 @@
-# turn://[user:pwd@]IP:Port#CC [TURN] [匿名性] [宽带] 中继IP 延迟ms 地理 ASN
 turn://46.224.180.177:3478#DE [TURN] [高匿] [企宽] [一般] [46.7KB/s] 46.224.180.177 3763ms [DE] 德国 AS24940 Hetzner Online GmbH 落地:46.224.180.177
 turn://46.224.133.126:3478#DE [TURN] [高匿] [企宽] [一般] [108.4KB/s] 46.224.133.126 3952ms [DE] 德国 AS24940 Hetzner Online GmbH 落地:46.224.133.126
 turn://46.224.174.245:3478#DE [TURN] [高匿] [企宽] [一般] [164.8KB/s] 46.224.174.245 1827ms [DE] 德国 AS24940 Hetzner Online GmbH 落地:46.224.174.245
