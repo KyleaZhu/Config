@@ -10,6 +10,10 @@ jobs:
     env:
       TZ: Asia/Shanghai
 
+    permissions:
+      contents: write
+      actions: write
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -48,7 +52,7 @@ jobs:
                       company_score = exit_data.get("company", {}).get("abuser_score", "")
                       asn_score = exit_data.get("asn", {}).get("abuser_score", "")
                       
-                      if "Very Low" in company_score and "Very Low" in asn_score:
+                      if exit_data.get("is_abuser") is True and "Very Low" in company_score and "Very Low" in asn_score:
                           location = exit_data.get("location", {})
                           country_code = location.get("country_code", "Unknown")
                           country = location.get("country", "Unknown")
