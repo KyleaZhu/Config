@@ -46,9 +46,8 @@ jobs:
                   if data.get("success") is True:
                       exit_data = data.get("exit", {})
                       company_score = exit_data.get("company", {}).get("abuser_score", "")
-                      asn_score = exit_data.get("asn", {}).get("abuser_score", "")
                       
-                      if "Low" in company_score and "Low" in asn_score:
+                      if "Low" in company_score:
                           location = exit_data.get("location", {})
                           country_code = location.get("country_code", "Unknown")
                           country = location.get("country", "Unknown")
@@ -100,7 +99,6 @@ jobs:
 
               print(f"\n检测与筛选完成，共保留 {len(final_lines)} 个符合要求的节点。")
 
-              os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
               with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
                   for line in final_lines:
                       f.write(line + "\n")
