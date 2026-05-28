@@ -1,7 +1,4 @@
-sstp://vpn:vpn@vpn511566379.opengw.net:1326#JP-Japan
-sstp://vpn:vpn@vpn613548820.opengw.net:1467#JP-Japan
-sstp://vpn:vpn@vpn763310803.opengw.net:1791#JP-Japan
-sstp://vpn:vpn@vpn496296722.opengw.net:995#KR-South Korea
-sstp://vpn:vpn@vpn454053944.opengw.net:1849#KR-South Korea
-sstp://vpn:vpn@vpn779010151.opengw.net:995#KR-South Korea
-sstp://vpn:vpn@vpn503500791.opengw.net:1965#TW-Taiwan
+sstp://vpn:vpn@vpn515413287.opengw.net:995#KR-South Korea
+sstp://vpn:vpn@n26.opengw.net:1194#JP-Japan
+sstp://vpn:vpn@vpn830143932.opengw.net:1527#JP-Japan
+sstp://vpn:vpn@vpn974535826.opengw.net:1570#US-United States
