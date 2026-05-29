@@ -60,7 +60,7 @@ const HTML = `<!doctype html>
             <h3>章节预览</h3>
             <span id="chapterHint"></span>
           </div>
-          <ol id="chapters"></ol>
+          <ul id="chapters"></ul>
         </div>
       </section>
     </section>
@@ -264,8 +264,8 @@ fieldset {
   color: #68736f;
   font-size: 13px;
 }
-ol {
-  list-style-position: inside;
+ul {
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px 14px;
@@ -284,6 +284,15 @@ li {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+li a {
+  color: #17211f;
+  text-decoration: none;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+li a:hover { color: #1f7668; text-decoration: underline; }
 @media (max-width: 760px) {
   .shell { width: min(100% - 20px, 1120px); margin: 10px auto; }
   .tool { padding: 16px; }
@@ -292,7 +301,7 @@ li {
     display: grid;
   }
   .badge { width: fit-content; }
-  ol { grid-template-columns: 1fr; }
+  ul { grid-template-columns: 1fr; }
 }
 `;
 
@@ -348,13 +357,16 @@ function renderBook(data) {
   rangeStart.max = String(data.chapters.length);
   rangeEnd.value = String(data.chapters.length);
   rangeEnd.max = String(data.chapters.length);
-  chapterHint.textContent = "共 " + data.chapters.length + " 章，显示前 " + Math.min(80, data.chapters.length) + " 章";
+  chapterHint.textContent = "共 " + data.chapters.length + " 章，显示前 " + Math.min(10, data.chapters.length) + " 章";
 
   chaptersEl.innerHTML = "";
-  for (const chapter of data.chapters.slice(0, 80)) {
+  for (const chapter of data.chapters.slice(0, 10)) {
     const li = document.createElement("li");
-    li.title = chapter.title + " (" + chapter.id + ")";
-    li.textContent = chapter.title || chapter.id;
+    const a = document.createElement("a");
+    a.href = "https://fanqienovel.com/reader/" + chapter.id;
+    a.target = "_blank";
+    a.textContent = chapter.title || chapter.id;
+    li.appendChild(a);
     chaptersEl.appendChild(li);
   }
 }
