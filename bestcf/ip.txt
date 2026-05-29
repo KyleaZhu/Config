@@ -1,3 +1,14 @@
+cdn.31514926.xyz:443#三网优选
+kyleazhu.cf.090227.xyz:443#三网优选
+kyleazhu.tencentapp.cn:443#三网优选
+cloudflare-dl.byoip.top:443#三网优选
+cf.877774.xyz:443#三网优选
+saas.sin.fan:443#三网优选
+www.visa.cn:443#官方优选
+fbi.gov:443#官方优选
+www.shopify.com:443#官方优选
+store.ubi.com:443#官方优选
+time.is:443#官方优选
 193.177.220.174:443#AU-澳大利亚
 188.95.70.102:443#DE-德国
 194.169.54.86:443#DE-德国
