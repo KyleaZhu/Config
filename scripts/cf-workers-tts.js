@@ -18,11 +18,23 @@ const MIMO_STYLES = [
   { value: '一位声音自然、吐字清晰的主播，语速适中，情绪平稳。', name: '默认 (标准自然播音腔)' }
 ];
 
-async function hashPassword(password) {
-  const msgBuffer = new TextEncoder().encode(password + "MIMO_SALT_2026");
+const MAX_TTS_TEXT_LENGTH = 2000;
+
+async function hashText(value) {
+  const msgBuffer = new TextEncoder().encode(value);
   const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function hashPassword(password) {
+  return hashText(password + "MIMO_SALT_2026");
+}
+
+async function getTtsAuthToken(adminPassword, apiKey, env) {
+  const configuredToken = (env && env.MIMO_TTS_TOKEN) || (typeof MIMO_TTS_TOKEN !== 'undefined' ? MIMO_TTS_TOKEN : '');
+  if (configuredToken) return configuredToken;
+  return hashText(`${adminPassword}:${apiKey}:MIMO_TTS_TOKEN_2026`);
 }
 
 async function handleRequest(request, env) {
@@ -33,13 +45,28 @@ async function handleRequest(request, env) {
   const SERVER_API_KEY = (env && env.MIMO_API_KEY) || (typeof MIMO_API_KEY !== 'undefined' ? MIMO_API_KEY : '');
   const ADMIN_PASSWORD = (env && env.ADMIN) || (typeof ADMIN !== 'undefined' ? ADMIN : '');
 
+  if (!ADMIN_PASSWORD) {
+    return new Response('System Error: Missing ADMIN environment variable.', { status: 500 });
+  }
+
+  const expectedAuthHash = await hashPassword(ADMIN_PASSWORD);
+  const ttsAuthToken = await getTtsAuthToken(ADMIN_PASSWORD, SERVER_API_KEY, env);
+  const cookies = request.headers.get('Cookie') || '';
+  const authCookie = cookies.split(';').find(c => c.trim().startsWith('mimo_auth='))?.split('=')[1];
+  const requestAuthToken = requestUrl.searchParams.get('auth') || '';
+  const hasAdminSession = authCookie === expectedAuthHash;
+  const hasTtsAccess = hasAdminSession || (requestAuthToken && requestAuthToken === ttsAuthToken);
+
   if (path === '/tts') {
+    if (!hasTtsAccess) return new Response('Unauthorized', { status: 401 });
+
     let text = requestUrl.searchParams.get('t') || '';
     const mode = requestUrl.searchParams.get('m') || 'preset';
     const voice = requestUrl.searchParams.get('v') || '冰糖';
     const stylePrompt = requestUrl.searchParams.get('style') || '';
     
     if (!text) return new Response('Text is empty', { status: 400 });
+    if (text.length > MAX_TTS_TEXT_LENGTH) return new Response(`Text is too long. Max length is ${MAX_TTS_TEXT_LENGTH} characters.`, { status: 413 });
     if (!SERVER_API_KEY) return new Response('Server MIMO_API_KEY not set', { status: 401 });
 
     text = text.trim() + "[停顿]";
@@ -48,12 +75,14 @@ async function handleRequest(request, env) {
   }
 
   if (path === '/reader.json') {
+    if (!hasTtsAccess) return new Response('Unauthorized', { status: 401 });
+
     const displayName = requestUrl.searchParams.get('n') || 'MiMoTTS';
     const mode = requestUrl.searchParams.get('m') || 'preset';
     const voice = requestUrl.searchParams.get('v') || '';
     const stylePrompt = requestUrl.searchParams.get('style') || '';
     
-    let ttsUrl = `${baseUrl}/tts?t={{java.encodeURI(speakText)}}&m=${mode}`;
+    let ttsUrl = `${baseUrl}/tts?t={{java.encodeURI(speakText)}}&m=${encodeURIComponent(mode)}&auth=${encodeURIComponent(ttsAuthToken)}`;
     if (voice) ttsUrl += `&v=${encodeURIComponent(voice)}`;
     if (stylePrompt) ttsUrl += `&style=${encodeURIComponent(stylePrompt)}`;
 
@@ -64,17 +93,9 @@ async function handleRequest(request, env) {
       "contentType": "audio/wav"
     };
     return new Response(JSON.stringify(config), { 
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' } 
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' } 
     });
   }
-
-  if (!ADMIN_PASSWORD) {
-    return new Response('System Error: Missing ADMIN environment variable.', { status: 500 });
-  }
-
-  const expectedAuthHash = await hashPassword(ADMIN_PASSWORD);
-  const cookies = request.headers.get('Cookie') || '';
-  const authCookie = cookies.split(';').find(c => c.trim().startsWith('mimo_auth='))?.split('=')[1];
 
   if (path === '/logout') {
     return new Response('已登出，跳转中...', {
@@ -84,7 +105,7 @@ async function handleRequest(request, env) {
   }
 
   if (path === '/login') {
-    if (authCookie === expectedAuthHash) {
+    if (hasAdminSession) {
       return new Response('已登录，跳转中...', { status: 302, headers: { 'Location': '/' } });
     }
 
@@ -96,7 +117,7 @@ async function handleRequest(request, env) {
           status: 302,
           headers: {
             'Location': '/',
-            'Set-Cookie': `mimo_auth=${expectedAuthHash}; Path=/; Max-Age=86400; HttpOnly; SameSite=Strict`
+            'Set-Cookie': `mimo_auth=${expectedAuthHash}; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Strict`
           }
         });
       } else {
@@ -106,11 +127,11 @@ async function handleRequest(request, env) {
     return new Response(getLoginHTML(false), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
-  if (authCookie !== expectedAuthHash) {
+  if (!hasAdminSession) {
     return new Response('未授权，跳转中...', { status: 302, headers: { 'Location': '/login' } });
   }
 
-  return new Response(getHTML(), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  return new Response(getHTML(ttsAuthToken), { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
 
 async function callMiMoAPI(text, apiKey, mode, voice, stylePrompt) {
@@ -142,7 +163,8 @@ async function callMiMoAPI(text, apiKey, mode, voice, stylePrompt) {
 
     if (!response.ok) {
       const errText = await response.text();
-      return new Response(`MiMo API Error: ${response.status} - ${errText}`, { status: response.status });
+      console.error(`MiMo API Error: ${response.status} - ${errText}`);
+      return new Response('MiMo API request failed', { status: response.status });
     }
 
     const data = await response.json();
@@ -156,7 +178,8 @@ async function callMiMoAPI(text, apiKey, mode, voice, stylePrompt) {
     return new Response(bytes, { 
       headers: { 
         'Content-Type': 'audio/wav',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store'
       } 
     });
   } catch (e) {
@@ -199,9 +222,10 @@ function getLoginHTML(showError) {
   `;
 }
 
-function getHTML() {
+function getHTML(ttsAuthToken) {
   const voicesHTML = MIMO_VOICES.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
   const stylesHTML = MIMO_STYLES.map(s => `<option value="${s.value}">${s.name}</option>`).join('');
+  const ttsAuthTokenLiteral = JSON.stringify(ttsAuthToken).replace(/</g, '\\u003c');
   
   return `
   <!DOCTYPE html>
@@ -281,6 +305,8 @@ function getHTML() {
     </div>
 
     <script>
+      const TTS_AUTH_TOKEN = ${ttsAuthTokenLiteral};
+
       function toggleMode() {
         const mode = document.getElementById('modeSelect').value;
         if (mode === 'preset') {
@@ -294,7 +320,7 @@ function getHTML() {
 
       function importToReader() {
         const mode = document.getElementById('modeSelect').value;
-        let configUrl = window.location.origin + "/reader.json?m=" + mode;
+        let configUrl = window.location.origin + "/reader.json?m=" + encodeURIComponent(mode) + "&auth=" + encodeURIComponent(TTS_AUTH_TOKEN);
         let engineName = "";
         
         if (mode === 'preset') {
