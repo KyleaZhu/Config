@@ -1,13 +1,9 @@
-name: Generate bestcf
+name: Update Cloudflare Best IP
+
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 */12 * * *" # every 12 hours
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - "**/README.md"
 
 permissions:
   contents: write
