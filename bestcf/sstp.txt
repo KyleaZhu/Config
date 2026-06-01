@@ -1,5 +1,0 @@
-sstp://vpn:vpn@vpn935622343.opengw.net:1537#US-United States
-sstp://vpn:vpn@vpn896507000.opengw.net:1253#JP-Japan
-sstp://vpn:vpn@vpn372296129.opengw.net:1244#JP-Japan
-sstp://vpn:vpn@vpn106798950.opengw.net:1688#JP-Japan
-sstp://vpn:vpn@vpn709500646.opengw.net:1400#KR-South Korea
