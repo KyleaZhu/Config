@@ -15,20 +15,27 @@ const HTML = `<!doctype html>
       <div class="title-row">
         <div>
           <h1>番茄小说下载</h1>
-          <p>输入小说 ID 或分享链接，预览目录后导出文件。</p>
+          <p>输入小说标题、小说 ID 或分享链接，预览目录后导出文件。</p>
         </div>
-        <span class="badge">Cloudflare Worker</span>
       </div>
 
       <form id="bookForm" class="query">
-        <label for="bookInput">小说 ID 或链接</label>
+        <label for="bookInput">小说标题、ID 或链接</label>
         <div class="query-line">
-          <input id="bookInput" name="input" autocomplete="off" placeholder="7276384138653862966 或 https://fanqienovel.com/page/7276384138653862966" required>
+          <input id="bookInput" name="input" autocomplete="off" placeholder="十日终焉 或 7143038691944959011 或 https://fanqienovel.com/page/7143038691944959011" required>
           <button type="submit">解析</button>
         </div>
       </form>
 
       <div id="status" class="status" role="status">等待输入。</div>
+
+      <section id="searchResults" class="search-results hidden" aria-live="polite">
+        <div class="chapter-title">
+          <h3>搜索结果</h3>
+          <span id="searchHint"></span>
+        </div>
+        <div id="resultList" class="result-list"></div>
+      </section>
 
       <section id="preview" class="preview hidden" aria-live="polite">
         <div class="book-head">
@@ -105,15 +112,6 @@ h3 { font-size: 16px; letter-spacing: 0; }
   color: #64706c;
   line-height: 1.6;
 }
-.badge {
-  flex: 0 0 auto;
-  font-size: 13px;
-  color: #175e52;
-  background: #e5f4ef;
-  border: 1px solid #c3e4da;
-  padding: 6px 10px;
-  border-radius: 999px;
-}
 .query {
   display: grid;
   gap: 8px;
@@ -186,6 +184,63 @@ button:disabled { cursor: wait; opacity: 0.62; }
   display: grid;
   gap: 20px;
   margin-top: 20px;
+}
+.search-results {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+.result-list {
+  display: grid;
+  gap: 10px;
+}
+.result-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid #dde2dd;
+  border-radius: 8px;
+  padding: 10px;
+  color: #17211f;
+  background: #fbfcfa;
+  text-align: left;
+  cursor: pointer;
+}
+.result-card:hover {
+  border-color: #9ed8ca;
+  background: #f4faf7;
+}
+.result-thumb {
+  width: 72px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: 1px solid #d8ddd7;
+  border-radius: 6px;
+  background: #edf0ec;
+}
+.result-main {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.result-title {
+  font-weight: 760;
+  overflow-wrap: anywhere;
+}
+.result-meta,
+.result-desc {
+  color: #57635f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.result-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .book-head {
   display: grid;
@@ -292,7 +347,7 @@ li a {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-li a:hover { color: #1f7668; text-decoration: underline; }
+li a:hover { color: #1f7668; text-decoration: none; }
 @media (max-width: 760px) {
   .shell { width: min(100% - 20px, 1120px); margin: 10px auto; }
   .tool { padding: 16px; }
@@ -300,7 +355,9 @@ li a:hover { color: #1f7668; text-decoration: underline; }
     grid-template-columns: 1fr;
     display: grid;
   }
-  .badge { width: fit-content; }
+  .result-card {
+    grid-template-columns: 64px 1fr;
+  }
   ul { grid-template-columns: 1fr; }
 }
 `;
@@ -311,6 +368,9 @@ let current = null;
 const form = document.getElementById("bookForm");
 const input = document.getElementById("bookInput");
 const statusEl = document.getElementById("status");
+const searchResults = document.getElementById("searchResults");
+const searchHint = document.getElementById("searchHint");
+const resultList = document.getElementById("resultList");
 const preview = document.getElementById("preview");
 const cover = document.getElementById("cover");
 const bookTitle = document.getElementById("bookTitle");
@@ -328,8 +388,80 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
+async function loadBookInput(raw, message) {
+  if (message) setStatus(message);
+  const res = await fetch("/api/book?input=" + encodeURIComponent(raw));
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "解析失败");
+  if (data.type === "search") {
+    renderSearchResults(data);
+    setStatus(data.results.length ? "请选择要下载的小说。" : "没有搜索到匹配的小说。");
+    return;
+  }
+  renderBook(data);
+  setStatus("解析完成。长篇小说可能触发 Worker 请求限制，建议按范围分段导出。");
+}
+
+function renderSearchResults(data) {
+  current = null;
+  preview.classList.add("hidden");
+  searchResults.classList.remove("hidden");
+  searchHint.textContent = "共 " + data.results.length + " 本";
+  resultList.innerHTML = "";
+
+  for (const item of data.results) {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "result-card";
+    card.title = "解析《" + (item.title || item.id) + "》";
+
+    const img = document.createElement("img");
+    img.className = "result-thumb";
+    img.alt = "";
+    if (item.thumb) {
+      img.src = item.thumb;
+    }
+
+    const main = document.createElement("div");
+    main.className = "result-main";
+    const title = document.createElement("div");
+    title.className = "result-title";
+    title.textContent = item.title || item.id;
+    const meta = document.createElement("div");
+    meta.className = "result-meta";
+    meta.textContent = [
+      item.author ? "作者：" + item.author : "",
+      item.serial ? item.serial + "章" : "",
+      formatWordCount(item.word_number),
+      item.read_count ? Number(item.read_count).toLocaleString() + "人在读" : ""
+    ].filter(Boolean).join(" · ");
+    const desc = document.createElement("div");
+    desc.className = "result-desc";
+    desc.textContent = item.docs || "";
+    main.append(title, meta, desc);
+
+    card.append(img, main);
+    card.addEventListener("click", async () => {
+      form.querySelector("button").disabled = true;
+      card.disabled = true;
+      input.value = item.id;
+      searchResults.classList.add("hidden");
+      try {
+        await loadBookInput(item.id, "正在解析《" + (item.title || item.id) + "》目录...");
+      } catch (error) {
+        setStatus(error.message);
+      } finally {
+        form.querySelector("button").disabled = false;
+        card.disabled = false;
+      }
+    });
+    resultList.appendChild(card);
+  }
+}
+
 function renderBook(data) {
   current = data;
+  searchResults.classList.add("hidden");
   preview.classList.remove("hidden");
 
   var m = data.meta || {};
@@ -365,6 +497,7 @@ function renderBook(data) {
     const a = document.createElement("a");
     a.href = "https://fanqienovel.com/reader/" + chapter.id;
     a.target = "_blank";
+    a.rel = "noopener noreferrer";
     a.textContent = chapter.title || chapter.id;
     li.appendChild(a);
     chaptersEl.appendChild(li);
@@ -396,16 +529,12 @@ form.addEventListener("submit", async (event) => {
   if (!raw) return;
 
   preview.classList.add("hidden");
+  searchResults.classList.add("hidden");
   current = null;
   form.querySelector("button").disabled = true;
-  setStatus("正在解析目录...");
 
   try {
-    const res = await fetch("/api/book?input=" + encodeURIComponent(raw));
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "解析失败");
-    renderBook(data);
-    setStatus("解析完成。长篇小说可能触发 Worker 请求限制，建议按范围分段导出。");
+    await loadBookInput(raw, "正在解析...");
   } catch (error) {
     setStatus(error.message);
   } finally {
@@ -418,9 +547,14 @@ downloadBtn.addEventListener("click", async () => {
     setStatus("请先解析小说。");
     return;
   }
-  const start = Math.max(1, Number.parseInt(rangeStart.value || "1", 10));
-  const end = Math.max(start, Number.parseInt(rangeEnd.value || String(current.chapters.length), 10));
-  const total = Math.min(end, current.chapters.length) - start + 1;
+  const maxChapter = current.chapters.length;
+  const startInput = Number.parseInt(rangeStart.value || "1", 10);
+  const endInput = Number.parseInt(rangeEnd.value || String(maxChapter), 10);
+  const start = Math.min(maxChapter, Math.max(1, Number.isFinite(startInput) ? startInput : 1));
+  const end = Math.min(maxChapter, Math.max(start, Number.isFinite(endInput) ? endInput : maxChapter));
+  const total = end - start + 1;
+  rangeStart.value = String(start);
+  rangeEnd.value = String(end);
 
   downloadBtn.disabled = true;
   const BATCH = 10;
@@ -478,7 +612,7 @@ export default {
         return text(JS, "application/javascript; charset=UTF-8");
       }
       if (request.method === "GET" && url.pathname === "/api/book") {
-        return json(await loadBook(url.searchParams.get("input") || "", env));
+        return json(await loadBook(url.searchParams.get("input") || "", env, ctx, request.url));
       }
       if (request.method === "GET" && url.pathname === "/api/download") {
         return await downloadBook(request, ctx, env);
@@ -495,7 +629,10 @@ export default {
 async function downloadBook(request, ctx, env) {
   const url = new URL(request.url);
   const input = url.searchParams.get("input") || "";
-  const book = await loadBook(input, env);
+  const book = await loadBook(input, env, ctx, request.url);
+  if (book.type === "search") {
+    throw new Error("请先从搜索结果中选择一本小说");
+  }
   const start = clampInt(url.searchParams.get("start"), 1, book.chapters.length, 1);
   const end = clampInt(url.searchParams.get("end"), start, book.chapters.length, book.chapters.length);
   const selected = book.chapters.slice(start - 1, end);
@@ -527,21 +664,41 @@ async function downloadBook(request, ctx, env) {
   return fileResponse(new TextEncoder().encode(body), filenameBase + ".txt", "text/plain; charset=UTF-8");
 }
 
-async function loadBook(input, env) {
-  const bookId = parseBookId(input);
+async function loadBook(input, env, ctx, requestUrl) {
+  const bookId = tryParseBookId(input);
+  if (!bookId) {
+    return await searchBooks(input, env, ctx, requestUrl);
+  }
+  const cacheKey = ctx && requestUrl
+    ? new Request(new URL("/cache/book/" + encodeURIComponent(bookId) + "?meta=" + (getOiapiKey(env) ? "1" : "0"), requestUrl), {
+        method: "GET"
+      })
+    : null;
+  if (cacheKey) {
+    const cached = await caches.default.match(cacheKey);
+    if (cached) return await cached.json();
+  }
+
   const [chapters, info] = await Promise.all([
     fetchDirectory(bookId),
     fetchBookInfo(bookId, env)
   ]);
-  return {
+  const book = {
     bookId,
     meta: { bookName: info.title || bookId, ...info },
     chapters
   };
+  if (cacheKey) {
+    const response = json(book, 200, {
+      "cache-control": "public, max-age=1800"
+    });
+    ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+  }
+  return book;
 }
 
 async function fetchBookInfo(bookId, env) {
-  const key = env && env.OIAPI;
+  const key = getOiapiKey(env);
   if (!key) {
     return { title: bookId, apiWarning: "未配置 OIAPI 环境变量，无法获取小说信息。请在 Cloudflare Worker 设置中添加环境变量 OIAPI。" };
   }
@@ -566,6 +723,75 @@ async function fetchBookInfo(bookId, env) {
     };
   } catch (e) {
     return { title: bookId, apiWarning: "获取小说信息失败：" + e.message };
+  }
+}
+
+async function searchBooks(input, env, ctx, requestUrl) {
+  const keyword = String(input || "").trim();
+  if (!keyword) throw new Error("请输入小说标题、ID 或链接");
+
+  const cacheKey = ctx && requestUrl
+    ? new Request(new URL("/cache/search/" + encodeURIComponent(keyword) + "?meta=" + (getOiapiKey(env) ? "1" : "0"), requestUrl), {
+        method: "GET"
+      })
+    : null;
+  if (cacheKey) {
+    const cached = await caches.default.match(cacheKey);
+    if (cached) return await cached.json();
+  }
+
+  const key = getOiapiKey(env);
+  if (!key) {
+    throw new Error("未配置 OIAPI 环境变量，无法按标题搜索小说");
+  }
+
+  const url = "https://oiapi.net/api/FqRead?keyword=" + encodeURIComponent(keyword) + "&key=" + encodeURIComponent(key);
+  const res = await fetch(url, {
+    headers: { accept: "application/json", "user-agent": USER_AGENT }
+  });
+  if (!res.ok) throw new Error("搜索接口返回 " + res.status);
+
+  const data = await res.json();
+  if (data.code !== 1 || !Array.isArray(data.data)) {
+    throw new Error(data.message || "搜索接口返回异常");
+  }
+
+  const result = {
+    type: "search",
+    keyword,
+    results: data.data.map(normalizeSearchBook).filter((item) => item.id)
+  };
+  if (cacheKey) {
+    const response = json(result, 200, {
+      "cache-control": "public, max-age=1800"
+    });
+    ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
+  }
+  return result;
+}
+
+function normalizeSearchBook(item) {
+  return {
+    id: pickString(item, ["id", "book_id", "bookId"]),
+    title: pickString(item, ["title", "book_name", "bookName", "name"]),
+    author: pickString(item, ["author", "author_name", "authorName"]),
+    docs: pickString(item, ["docs", "abstract", "description", "desc"]),
+    thumb: pickString(item, ["thumb", "cover", "cover_url", "coverUrl"]),
+    serial: pickString(item, ["serial", "chapter_count", "chapterCount"]),
+    word_number: pickString(item, ["word_number", "wordNumber", "words"]),
+    read_count: pickString(item, ["read_count", "readCount"])
+  };
+}
+
+function getOiapiKey(env) {
+  return env && env.OIAPI;
+}
+
+function tryParseBookId(input) {
+  try {
+    return parseBookId(input);
+  } catch {
+    return "";
   }
 }
 
