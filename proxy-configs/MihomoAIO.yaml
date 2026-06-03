@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne_Full
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-05-01
+# Date: 2026-06-03
 
 mixed-port: 7890
 unified-delay: true
@@ -118,11 +118,17 @@ proxy-providers:
     override:
       additional-prefix: "[爱跨域]"
 
+  浮云花昔:
+    <<: *Providers
+    url:
+    path: ./providers/浮云花昔.yaml
+    override:
+      additional-prefix: "[浮云]"
+
 proxy-groups:
   - {name: 节点选择, type: select, proxies: [香港自动, 日本自动, 坡县自动, 美国自动], icon: https://testingcf.jsdelivr.net/gh/Semporia/Hand-Painted-icon@master/Universal/Airport.png}
   - {name: 人工智障, <<: *Select, use: *Used, filter: *FilterUS, icon: https://testingcf.jsdelivr.net/gh/NB921/picture@main/chatgpt.png}
   - {name: 电报信息, <<: *Select, use: *Used, filter: *FilterSG, icon: https://testingcf.jsdelivr.net/gh/NB921/picture@main/Telegram.png}
-  - {name: 油管无广, <<: *Select, use: *Used, filter: "(?i)俄罗斯|🇷🇺|Russia", proxies: [节点选择], icon: https://testingcf.jsdelivr.net/gh/NB921/picture@main/Youtube1.png}
   - {name: 香港自动, <<: *UrlTest, use: *Used, filter: *FilterHK}
   - {name: 日本自动, <<: *UrlTest, use: *Used, filter: *FilterJP}
   - {name: 坡县自动, <<: *UrlTest, use: *Used, filter: *FilterSG}
@@ -133,12 +139,12 @@ rule-providers:
   AdRules: {<<: *dmrs, url: https://adrules.top/adrules-mihomo.mrs, path: ./ruleset/AdRules.mrs}
 
 rules:
+  - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT
   - RULE-SET, anti-AD, REJECT
   - RULE-SET, AdRules, REJECT
   - GEOIP, telegram, 电报信息
   - GEOSITE, telegram, 电报信息
   - GEOSITE, ai, 人工智障
-  - GEOSITE, youtube, 油管无广
   - GEOSITE, games-cn, DIRECT
   - GEOSITE, cn, DIRECT
   - GEOIP, cn, DIRECT
