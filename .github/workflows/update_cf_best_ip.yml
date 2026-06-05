@@ -18,11 +18,10 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Generate bestcf `IP`
         run: |
-          echo "update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
           mkdir -p ./bestcf/
           # CMCC-IP
           curl -sSL https://cf.090227.xyz/cmcc | sed 's/#.*//' | awk '{print $0 "#CMCC-IPv4_CMLiu_" NR}' > ./bestcf/cmcc-ip.txt
@@ -54,7 +53,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add bestcf/
-          git commit -m "Cloudflare 优选 IP 更新于 ${update_version}" || exit 0
+          git commit -m "Cloudflare 优选 IP 更新于 $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
           git push origin main
 
       - name: Delete old workflow runs
