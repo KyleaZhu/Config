@@ -1,3 +1,0 @@
-# IPv4 Prefixes for AS57523 (CHANGWAY-AS, HK)
-
-# IPv6 Prefixes for AS57523 (CHANGWAY-AS, HK)
