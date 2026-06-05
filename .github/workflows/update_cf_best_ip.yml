@@ -2,16 +2,20 @@ name: Update Cloudflare Best IP
 
 on:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "0 4,16 * * *"
   workflow_dispatch:
-
-permissions:
-  contents: write
-  actions: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      TZ: Asia/Shanghai
+    
+    permissions:
+      contents: write
+      actions: write
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
