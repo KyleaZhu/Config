@@ -1,9 +1,9 @@
 name: Update Cloudflare Best IP
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "0 */12 * * *" # every 12 hours
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
