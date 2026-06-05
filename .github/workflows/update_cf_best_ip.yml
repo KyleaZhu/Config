@@ -55,11 +55,3 @@ jobs:
           git add bestcf/cmcc-ip.txt bestcf/cucc-ip.txt bestcf/ctcc-ip.txt
           git commit -m "Cloudflare 优选 IP 更新于 $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
           git push origin main
-
-      - name: Delete old workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 3
-          keep_minimum_runs: 1
