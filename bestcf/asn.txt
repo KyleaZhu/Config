@@ -1,5 +1,14 @@
+# DMIT (核心网段)
 AS906
+
+# xTom / V.PS (包含澳洲、德国、香港、美国等节点)
 AS8888
 AS3214
 AS9312
 AS50967
+
+# BandwagonHost / 搬瓦工 (IT7 Networks 顶级路由线路)
+AS25820
+
+# Misaka Network / 御坂网络 (全球核心与 Anycast 网络)
+AS57523
