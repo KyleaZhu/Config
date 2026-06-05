@@ -42,7 +42,8 @@ jobs:
             
             HT_CLEAN=$(echo "$HT_INFO" | tr -d '"')
             HT_NAME=$(echo "$HT_CLEAN" | cut -d',' -f2-)
-            FORMATTED_NAME=$(echo "$HT_NAME" | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -e 's/^-//' -e 's/-$//')
+            FORMATTED_NAME=$(echo "$HT_NAME" | sed 's/, /-/g' | sed 's/,/-/g')
+            FORMATTED_NAME=$(echo "$FORMATTED_NAME" | sed -E 's/[^a-zA-Z0-9 -]+/-/g' | sed -E 's/-+/-/g' | sed -e 's/^-//' -e 's/-$//')
             
             if [ -z "$FORMATTED_NAME" ] || [[ "$HT_INFO" == *"error"* ]] || [[ "$HT_INFO" == *"API count"* ]]; then
               FILE_NAME="${CLEAN_ASN}.txt"
