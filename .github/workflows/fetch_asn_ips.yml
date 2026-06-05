@@ -28,7 +28,7 @@ jobs:
           while IFS= read -r RAW_ASN || [ -n "$RAW_ASN" ]; do
             CLEAN_ASN=$(echo "$RAW_ASN" | tr -d '\r ' )
             
-            if [ -z "$CLEAN_ASN" ] || [[ "$CLEAN_ASN" == #* ]]; then
+            if [ -z "$CLEAN_ASN" ] || [[ "$CLEAN_ASN" == "#"* ]]; then
               continue
             fi
             
