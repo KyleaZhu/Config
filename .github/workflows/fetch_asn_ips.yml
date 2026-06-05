@@ -1,57 +1,87 @@
-name: Fetch ASN Prefixes
+name: Fetch ASN Prefixes Batch
 
 on:
   workflow_dispatch:
-    inputs:
-      asn:
-        description: '请输入 ASN (例如: 906 或 AS906)'
-        required: true
-        type: string
-
-permissions:
-  contents: write
 
 jobs:
   fetch-and-save:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Fetch and Process IP Prefixes
         run: |
-          RAW_ASN="${{ github.event.inputs.asn }}"
-          CLEAN_ASN="AS${RAW_ASN//[aA][sS]/}"
-          
-          echo "正在查询 ${CLEAN_ASN} 的 IP 段..."
-
-          API_URL="https://stat.ripe.net/data/announced-prefixes/data.json?resource=${CLEAN_ASN}"
-          RESPONSE=$(curl -s "$API_URL")
-
           mkdir -p bestcf
+          
+          if [ ! -f "bestcf/asn.txt" ]; then
+            echo "错误: 找不到 bestcf/asn.txt 文件！请先创建并提交该文件。"
+            exit 1
+          fi
 
-          echo "# IPv4 Prefixes for ${CLEAN_ASN}" > bestcf/ips.txt
-          echo "$RESPONSE" | jq -r '.data.prefixes[].prefix | select(contains(":") | not)' >> bestcf/ips.txt
+          echo "开始读取 bestcf/asn.txt 进行批量处理..."
 
-          echo "" >> bestcf/ips.txt
+          while IFS= read -r RAW_ASN || [ -n "$RAW_ASN" ]; do
+            CLEAN_ASN=$(echo "$RAW_ASN" | tr -d '\r ' )
+            
+            if [ -z "$CLEAN_ASN" ]; then
+              continue
+            fi
+            
+            CLEAN_ASN="AS${CLEAN_ASN//[aA][sS]/}"
+            
+            echo "----------------------------------------"
+            echo "正在处理 ${CLEAN_ASN} ..."
 
-          echo "# IPv6 Prefixes for ${CLEAN_ASN}" >> bestcf/ips.txt
-          echo "$RESPONSE" | jq -r '.data.prefixes[].prefix | select(contains(":"))' >> bestcf/ips.txt
+            HT_URL="https://api.hackertarget.com/aslookup/?q=${CLEAN_ASN}"
+            HT_INFO=$(curl -s "$HT_URL" | head -n 1)
+            
+            HT_CLEAN=$(echo "$HT_INFO" | tr -d '"')
+            HT_NAME=$(echo "$HT_CLEAN" | cut -d',' -f2-)
+            FORMATTED_NAME=$(echo "$HT_NAME" | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -e 's/^-//' -e 's/-$//')
+            
+            if [ -z "$FORMATTED_NAME" ] || [[ "$HT_INFO" == *"error"* ]] || [[ "$HT_INFO" == *"API count"* ]]; then
+              FILE_NAME="${CLEAN_ASN}.txt"
+              echo "HackerTarget 解析失败或被限流，回退文件名至: ${FILE_NAME}"
+            else
+              FILE_NAME="${CLEAN_ASN}-${FORMATTED_NAME}.txt"
+            fi
+            
+            FILE_PATH="bestcf/${FILE_NAME}"
+            echo "将写入文件: ${FILE_PATH}"
 
-          echo "提取完成！以下为生成的文件内容摘要："
-          cat bestcf/ips.txt
+            API_URL="https://stat.ripe.net/data/announced-prefixes/data.json?resource=${CLEAN_ASN}"
+            RESPONSE=$(curl -s "$API_URL")
+            
+            echo "# IPv4 Prefixes for ${CLEAN_ASN} (${HT_NAME})" > "$FILE_PATH"
+            echo "$RESPONSE" | jq -r '.data.prefixes[].prefix | select(contains(":") | not)' >> "$FILE_PATH"
+
+            echo "" >> "$FILE_PATH"
+
+            echo "# IPv6 Prefixes for ${CLEAN_ASN} (${HT_NAME})" >> "$FILE_PATH"
+            echo "$RESPONSE" | jq -r '.data.prefixes[].prefix | select(contains(":"))' >> "$FILE_PATH"
+            
+            echo "${CLEAN_ASN} 处理完毕！"
+            
+            sleep 2
+            
+          done < bestcf/asn.txt
 
       - name: Commit and Push Changes
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          git add bestcf/ips.txt
+          git add bestcf/*.txt
           
           if ! git diff-index --quiet HEAD; then
-            git commit -m "Update IP prefixes for ${{ github.event.inputs.asn }}"
+            git commit -m "Auto-update ASN IP prefixes from list"
             git push
             echo "变动已成功推送到仓库！"
           else
-            echo "IP 段未发生任何变化，无需提交。"
+            echo "所有 IP 段均未发生任何变化，无需提交。"
           fi
