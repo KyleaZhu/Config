@@ -16,7 +16,7 @@ jobs:
 
       - name: Fetch and Process IP Prefixes
         run: |
-          mkdir -p bestcf
+          mkdir -p bestcf/ips
           
           if [ ! -f "bestcf/asn.txt" ]; then
             echo "错误: 找不到 bestcf/asn.txt 文件！请先创建并提交该文件。"
@@ -28,7 +28,7 @@ jobs:
           while IFS= read -r RAW_ASN || [ -n "$RAW_ASN" ]; do
             CLEAN_ASN=$(echo "$RAW_ASN" | tr -d '\r ' )
             
-            if [ -z "$CLEAN_ASN" ]; then
+            if [ -z "$CLEAN_ASN" ] || [[ "$CLEAN_ASN" == #* ]]; then
               continue
             fi
             
@@ -52,7 +52,7 @@ jobs:
               FILE_NAME="${CLEAN_ASN}-${FORMATTED_NAME}.txt"
             fi
             
-            FILE_PATH="bestcf/${FILE_NAME}"
+            FILE_PATH="bestcf/ips/${FILE_NAME}"
             echo "将写入文件: ${FILE_PATH}"
 
             API_URL="https://stat.ripe.net/data/announced-prefixes/data.json?resource=${CLEAN_ASN}"
@@ -77,7 +77,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          git add bestcf/*.txt
+          git add bestcf/ips/*.txt
           
           if ! git diff-index --quiet HEAD; then
             git commit -m "Auto-update ASN IP prefixes from list"
