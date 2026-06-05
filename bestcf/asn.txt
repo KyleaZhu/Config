@@ -9,6 +9,3 @@ AS50967
 
 # BandwagonHost / 搬瓦工 (IT7 Networks 顶级路由线路)
 AS25820
-
-# Misaka Network / 御坂网络 (全球核心与 Anycast 网络)
-AS57523
