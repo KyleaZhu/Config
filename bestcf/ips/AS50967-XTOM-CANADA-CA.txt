@@ -1,4 +1,0 @@
-# IPv4 Prefixes for AS50967 (XTOM-CANADA, CA)
-
-# IPv6 Prefixes for AS50967 (XTOM-CANADA, CA)
-2001:67c:2140::/48
