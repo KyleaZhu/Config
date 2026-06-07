@@ -3,7 +3,6 @@ cf.877774.xyz#三网优选
 cdn.31514926.xyz#三网优选
 kyleazhu.cf.090227.xyz#三网优选
 kyleazhu.tencentapp.cn#三网优选
-cloudflare-dl.byoip.top#三网优选
 kyleazhu.cloudflare.182682.xyz#三网优选
 
 time.is#官方优选
