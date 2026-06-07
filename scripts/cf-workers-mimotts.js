@@ -18,6 +18,8 @@ const MIMO_STYLES = [
   { value: '一位声音自然、吐字清晰的主播，语速适中，情绪平稳。', name: '默认 (标准自然播音腔)' }
 ];
 
+const DEFAULT_PRESET_STYLE_PROMPT = '请用自然清晰、耐听的小说旁白风格朗读。语速适中偏慢，吐字清楚，情绪表达克制自然，停顿舒适；对话根据语境轻微区分，但不要夸张表演。';
+
 const MAX_TTS_TEXT_LENGTH = 2000;
 
 async function hashText(value) {
@@ -142,9 +144,7 @@ async function callMiMoAPI(text, apiKey, mode, voice, stylePrompt) {
   if (mode === 'preset') {
     body.model = "mimo-v2.5-tts";
     body.audio.voice = voice;
-    if (stylePrompt) {
-      messages.push({ role: 'user', content: stylePrompt });
-    }
+    messages.push({ role: 'user', content: stylePrompt.trim() || DEFAULT_PRESET_STYLE_PROMPT });
   } else {
     body.model = "mimo-v2.5-tts-voicedesign";
     const finalPrompt = (stylePrompt && stylePrompt.trim() !== '') ? stylePrompt.trim() : "一位声音自然、吐字清晰的主播，语速适中，情绪平稳。";
