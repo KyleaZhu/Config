@@ -21,12 +21,11 @@ const MIMO_STYLES = [
   { value: '一位二十多岁的年轻女性电台主播。她的声音丝滑清透，没有任何攻击性。语速平缓流畅，语气温柔治愈且带着淡淡的微笑感，像是在午后阳光下为你朗读散文，听感极度放松。', name: '治愈女声 (温柔知性，现言散文)' },
   { value: '一位三十岁左右的男性有声书播音员，正在演播一部悬疑推理小说。他的声音低沉微哑，极具冷峻感。语速缓慢而刻意，语气克制且带着强烈的神秘感，仿佛在压低嗓音向你揭开一个秘密。', name: '悬疑冷峻 (低沉微哑，探险刑侦)' },
   { value: '一位二三十岁的青年男性评书先生。他的声音清朗明快，底气充足，咬字非常清晰干脆。说话节奏感极强，语气中带着一种古代说书人特有的从容与潇洒，适合演播武侠或修仙小说。', name: '潇洒清朗 (咬字干脆，武侠修仙)' },
-  { value: '一位十八九岁的活力少女，正在用播客主播的口吻讲述故事。她的声音明亮活泼，充满朝气。语速稍快，语气里带着自然的亲切感和机灵劲儿，就像好朋友坐在身边跟你眉飞色舞地聊天一样生动。', name: '灵动少女 (明亮活泼，轻小说/日常)' },
+  { value: '一位十八九岁的活力少女，正在用播客主播的口吻讲述故事。她的声音明亮活泼，充满朝气。语速稍快，语气里带着自然的亲切感和机灵劲儿，就像好朋友坐在身边跟你眉飞色舞地聊天一样生动。', name: '灵动少女 (明亮活泼，轻小说)' },
   { value: '一位声音自然、吐字清晰的主播，语速适中，情绪平稳。', name: '默认 (标准自然播音腔)' }
 ];
 
 const DEFAULT_PRESET_STYLE_PROMPT = '请用自然清晰、耐听的小说旁白风格朗读。语速适中偏慢，吐字清楚，情绪表达克制自然，停顿舒适；对话根据语境轻微区分，但不要夸张表演。';
-const DEFAULT_DESIGN_STYLE_PROMPT = '一位声音自然、吐字清晰的主播，语速适中，情绪平稳。';
 
 const HTML_HEADERS = { 'Content-Type': 'text/html; charset=utf-8' };
 const JSON_HEADERS = {
@@ -47,41 +46,22 @@ async function hashText(value) {
   return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-async function hashPassword(password) {
-  return hashText(password + AUTH_SALT);
-}
-
-async function getTtsAuthToken(adminPassword, apiKey, env) {
-  const configuredToken = getBinding(env, 'MIMO_TTS_TOKEN');
-  if (configuredToken) return configuredToken;
-  return hashText(`${adminPassword}:${apiKey}:${TTS_TOKEN_SALT}`);
-}
-
-function getBinding(env, name) {
-  if (env && env[name]) return env[name];
-  try {
-    return globalThis[name] || '';
-  } catch (_) {
-    return '';
-  }
-}
-
 function getRequestContext(request, env) {
   const requestUrl = new URL(request.url);
   return {
     env,
     requestUrl,
-    path: requestUrl.pathname,
     baseUrl: `${requestUrl.protocol}//${requestUrl.host}`,
-    serverApiKey: getBinding(env, 'MIMO_API_KEY'),
-    adminPassword: getBinding(env, 'ADMIN')
+    path: requestUrl.pathname,
+    serverApiKey: env.MIMO_API_KEY,
+    adminPassword: env.ADMIN
   };
 }
 
 async function getAuthContext(request, context) {
-  const expectedAuthHash = await hashPassword(context.adminPassword);
-  const ttsAuthToken = await getTtsAuthToken(context.adminPassword, context.serverApiKey, context.env);
-  const authCookie = getCookie(request.headers.get('Cookie') || '', AUTH_COOKIE_NAME);
+  const expectedAuthHash = await hashText(context.adminPassword + AUTH_SALT);
+  const ttsAuthToken = await hashText(`${context.adminPassword}:${context.serverApiKey}:${TTS_TOKEN_SALT}`);
+  const authCookie = (request.headers.get('Cookie') || '').split(';').map(cookie => cookie.trim()).find(cookie => cookie.startsWith(`${AUTH_COOKIE_NAME}=`))?.split('=')[1];
   const requestAuthToken = context.requestUrl.searchParams.get('auth') || '';
   const hasAdminSession = authCookie === expectedAuthHash;
 
@@ -91,14 +71,6 @@ async function getAuthContext(request, context) {
     hasAdminSession,
     hasTtsAccess: hasAdminSession || (requestAuthToken && requestAuthToken === ttsAuthToken)
   };
-}
-
-function getCookie(cookieHeader, name) {
-  return cookieHeader
-    .split(';')
-    .map(cookie => cookie.trim())
-    .find(cookie => cookie.startsWith(`${name}=`))
-    ?.split('=')[1];
 }
 
 function redirect(message, location, headers = {}) {
@@ -114,10 +86,6 @@ function unauthorized() {
 
 function htmlResponse(html) {
   return new Response(html, { headers: HTML_HEADERS });
-}
-
-function appendTtsPause(text) {
-  return text.trim() + '[停顿]';
 }
 
 function getTtsParams(searchParams) {
@@ -143,10 +111,10 @@ function buildMiMoRequestBody(text, mode, voice, stylePrompt) {
   if (mode === DEFAULT_MODE) {
     body.model = MIMO_TTS_MODEL;
     body.audio.voice = voice;
-    messages.push({ role: 'user', content: stylePrompt.trim() || DEFAULT_PRESET_STYLE_PROMPT });
+    messages.push({ role: 'user', content: DEFAULT_PRESET_STYLE_PROMPT });
   } else {
     body.model = MIMO_VOICE_DESIGN_MODEL;
-    messages.push({ role: 'user', content: stylePrompt.trim() || DEFAULT_DESIGN_STYLE_PROMPT });
+    messages.push({ role: 'user', content: stylePrompt.trim() });
   }
 
   messages.push({ role: 'assistant', content: text });
@@ -188,11 +156,12 @@ async function handleRequest(request, env) {
     return handleLogin(request, context, auth);
   }
 
-  if (!auth.hasAdminSession) {
-    return redirect('未授权，跳转中...', '/login');
+  if (context.path === '/') {
+    if (!auth.hasAdminSession) return redirect('未授权，跳转中...', '/login');
+    return htmlResponse(getHTML(auth.ttsAuthToken));
   }
 
-  return htmlResponse(getHTML(auth.ttsAuthToken));
+  return new Response('Not Found', { status: 404 });
 }
 
 async function handleTts(context, auth) {
@@ -203,10 +172,10 @@ async function handleTts(context, auth) {
   if (params.text.length > MAX_TTS_TEXT_LENGTH) {
     return new Response(`Text is too long. Max length is ${MAX_TTS_TEXT_LENGTH} characters.`, { status: 413 });
   }
-  if (!context.serverApiKey) return new Response('Server MIMO_API_KEY not set', { status: 401 });
+  if (!context.serverApiKey) return new Response('Server MIMO_API_KEY not set', { status: 500 });
 
   return callMiMoAPI(
-    appendTtsPause(params.text),
+    params.text.trim() + '[停顿]',
     context.serverApiKey,
     params.mode,
     params.voice,
