@@ -142,6 +142,7 @@ rule-providers:
 
 rules:
   - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT
+  - DomainSuffix, immersivetranslate.com, DIRECT
   - RULE-SET, anti-AD, REJECT
   - RULE-SET, AdRules, REJECT
   - GEOIP, telegram, 电报信息
