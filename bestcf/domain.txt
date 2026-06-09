@@ -1,8 +1,11 @@
+ip.sb#IP.SB
 time.is#Time.is
+visa.com#Visa
 npmjs.com#npm
-www.visa.cn#Visa
+shopify.com#Shopify
 decathlon.qa#Decathlon
 mdpi-res.com#MDPI
+singapore.com#Singapore
 igg-games.com#IGGGAMES
 researchgate.net#ResearchGate
 digitalocean.com#DigitalOcean
