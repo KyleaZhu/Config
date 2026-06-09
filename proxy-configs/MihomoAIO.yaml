@@ -1,7 +1,7 @@
-# Name: MihomoAllInOne_Full
+# Name: MihomoAllInOne
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-06-03
+# Date: 2026-06-09
 
 mixed-port: 7890
 unified-delay: true
@@ -142,9 +142,11 @@ rule-providers:
 
 rules:
   - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT
-  - DomainSuffix, immersivetranslate.com, DIRECT
   - RULE-SET, anti-AD, REJECT
   - RULE-SET, AdRules, REJECT
+  - DomainSuffix, xdu.qzz.io, DIRECT
+  - DomainSuffix, 402.dpdns.org, DIRECT
+  - DomainSuffix, immersivetranslate.com, DIRECT
   - GEOIP, telegram, 电报信息
   - GEOSITE, telegram, 电报信息
   - GEOSITE, ai, 人工智障
