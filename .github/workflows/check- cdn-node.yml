@@ -1,0 +1,104 @@
+name: Check CDN Nodes
+
+on:
+  workflow_dispatch: # 支持在 GitHub 页面上手动点击运行
+
+jobs:
+  check-nodes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run Check Script
+        run: |
+          python -c '
+          import os
+          import json
+          import urllib.request
+          import urllib.parse
+          import time
+
+          src_path = "data/bili-cdn-nodes.json"
+          dest_path = "data/chesi.json"
+
+          # 确保源文件存在
+          if not os.path.exists(src_path):
+              print(f"Error: {src_path} not found.")
+              exit(1)
+
+          with open(src_path, "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          output_data = {}
+
+          # 遍历运营商（如 电信、联通）
+          for provider, regions in data.items():
+              valid_regions = {}
+              
+              # 遍历地域（如 安徽芜湖）
+              for region, domains in regions.items():
+                  valid_domains = []
+                  
+                  # 遍历域名列表
+                  for domain in domains:
+                      # 构造请求 URL
+                      params = urllib.parse.urlencode({"domain": domain})
+                      url = f"https://oiapi.net/api/CsrSSL?{params}"
+                      
+                      try:
+                          print(f"Checking {domain} ...")
+                          req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                          with urllib.request.urlopen(req, timeout=10) as response:
+                              res_json = json.loads(response.read().decode("utf-8"))
+                              
+                              # 判断 API 返回的 code 是否为 1 (有效)
+                              if res_json.get("code") == 1:
+                                  valid_domains.append(domain)
+                                  print(f"-> [SUCCESS] {domain} is valid.")
+                              else:
+                                  print(f"-> [FAILED] {domain} returned code {res_json.get(\"code\")}")
+                      except Exception as e:
+                          print(f"-> [ERROR] {domain} request failed: {e}")
+                      
+                      # 稍微限速，避免请求太快被 API 熔断或拉黑
+                      time.sleep(0.5)
+                  
+                  # 如果该地域下有有效的域名，保留该地域
+                  if valid_domains:
+                      valid_regions[region] = valid_domains
+              
+              # 如果该运营商下有有效地域，保留该运营商
+              if valid_regions:
+                  output_data[provider] = valid_regions
+
+          # 确保目标文件夹存在
+          os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+
+          # 按照原格式写入新文件
+          with open(dest_path, "w", encoding="utf-8") as f:
+              json.dump(output_data, f, ensure_ascii=False, indent=2)
+          print("Check finished. Data saved to data/chesi.json")
+          '
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 检查文件是否有变动
+          if [ -f "data/chesi.json" ]; then
+            git add data/chesi.json
+            if ! git diff --cached --quiet; then
+              git commit -m "chore: update valid CDN nodes [skip ci]"
+              git push
+            else
+              echo "No changes detected in chesi.json"
+            fi
+          fi
