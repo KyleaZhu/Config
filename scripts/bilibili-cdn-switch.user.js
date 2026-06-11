@@ -606,7 +606,7 @@
 
         let data = {};
         try {
-            const res = await fetch('https://testingcf.jsdelivr.net/gh/KyleaZhu/Config@main/data/alive-bili-cdn-nodes.json?t=' + Date.now());
+            const res = await fetch('https://testingcf.jsdelivr.net/gh/KyleaZhu/Config@main/data/bili-cdn-nodes-alive.json?t=' + Date.now());
             if (!res.ok) throw new Error('Fetch failed');
             data = await res.json();
         } catch (e) {
