@@ -2,6 +2,8 @@ ip.sb#IP.SB
 time.is#Time.is
 visa.com#Visa
 npmjs.com#npm
+deepin.org#deepin
+52pojie.org#吾爱破解
 shopify.com#Shopify
 decathlon.qa#Decathlon
 mdpi-res.com#MDPI
