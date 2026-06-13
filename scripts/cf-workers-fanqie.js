@@ -490,8 +490,6 @@ function renderBook(data) {
   addStat("近14天阅读", m.reader_uv_14day ? Number(m.reader_uv_14day).toLocaleString() : "");
   addStat("总收藏量", m.all_bookshelf_count ? Number(m.all_bookshelf_count).toLocaleString() : "");
   addStat("听书人数", m.listen_count ? Number(m.listen_count).toLocaleString() : "");
-  addStat("质量评级", m.quality_rate);
-  addStat("持续更新", m.keep_update_days ? m.keep_update_days + "天" : "");
   addStat("创建时间", m.create_time ? m.create_time.slice(0, 10) : "");
   addStat("最后更新", m.last_publish_time);
 
@@ -727,9 +725,7 @@ async function fetchBookInfo(bookId) {
       reader_uv_14day: d.reader_uv_14day || "",
       all_bookshelf_count: d.all_bookshelf_count || "",
       listen_count: d.listen_count || "",
-      quality_rate: d.quality_rate || "",
       create_time: d.create_time || "",
-      keep_update_days: d.keep_update_days || "",
       last_publish_time: d.last_publish_time ? new Date(Number(d.last_publish_time) * 1000).toISOString().slice(0, 10) : ""
     };
   } catch (e) {
