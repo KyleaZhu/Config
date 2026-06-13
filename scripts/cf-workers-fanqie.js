@@ -480,10 +480,20 @@ function renderBook(data) {
   }
 
   bookStats.innerHTML = "";
-  addStat("书籍 ID", m.remoteId || data.bookId);
-  addStat("章节", m.serial ? m.serial + "章" : data.chapters.length + "章");
+  addStat("分类", m.category);
+  addStat("评分", m.score ? m.score + "分" : "");
   addStat("字数", formatWordCount(m.word_number));
-  addStat("在读", m.read_count ? Number(m.read_count).toLocaleString() + "人" : "");
+  addStat("章节", m.serial ? m.serial + "章" : data.chapters.length + "章");
+  addStat("状态", m.update_status === "1" ? "连载中" : m.update_status === "2" ? "已完结" : "");
+  addStat("当前在读", m.read_count ? Number(m.read_count).toLocaleString() : "");
+  addStat("累计阅读", m.reader_uv_sum_daily ? Number(m.reader_uv_sum_daily).toLocaleString() : "");
+  addStat("近14天阅读", m.reader_uv_14day ? Number(m.reader_uv_14day).toLocaleString() : "");
+  addStat("总收藏量", m.all_bookshelf_count ? Number(m.all_bookshelf_count).toLocaleString() : "");
+  addStat("听书人数", m.listen_count ? Number(m.listen_count).toLocaleString() : "");
+  addStat("质量评级", m.quality_rate);
+  addStat("持续更新", m.keep_update_days ? m.keep_update_days + "天" : "");
+  addStat("创建时间", m.create_time ? m.create_time.slice(0, 10) : "");
+  addStat("最后更新", m.last_publish_time);
 
   rangeStart.value = "1";
   rangeStart.max = String(data.chapters.length);
@@ -573,24 +583,19 @@ downloadBtn.addEventListener("click", async () => {
       const res = await fetch("/api/download?" + params.toString());
       if (!res.ok) throw new Error("批次下载失败: " + res.status);
       const txt = await res.text();
-      const marker = "\\n========================================\\n";
-      const mi = txt.indexOf(marker);
-      if (mi >= 0) {
-        allParts.push(txt.slice(mi + marker.length));
-      } else {
-        allParts.push(txt);
-      }
+      allParts.push(txt);
     } catch (e) {
-      allParts.push("　　[第 " + i + "-" + batchEnd + " 章下载失败：" + e.message + "]");
+      allParts.push("[第 " + i + "-" + batchEnd + " 章下载失败：" + e.message + "]");
     }
     if (batchEnd < end) await new Promise(r => setTimeout(r, 500));
   }
 
-  const header = "book_id=" + current.bookId + "\\n章节：" + current.chapters.length + "\\n导出范围：" + start + "-" + end + "\\n\\n========================================";
-  const blob = new Blob([header + "\\n" + allParts.join("\\n----------------------------------------\\n")], { type: "text/plain;charset=utf-8" });
+  const header = (current.meta && current.meta.docs ? "简介\\n" + current.meta.docs + "\\n\\n----------------------------------------\\n" : "");
+  const blob = new Blob([header + allParts.join("")], { type: "text/plain;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = (current.bookId || "novel") + ".txt";
+  const name = (current.meta && current.meta.title ? current.meta.title + (current.meta.author ? " 作者：" + current.meta.author : "") : current.bookId) || "novel";
+  a.download = name + ".txt";
   a.click();
   URL.revokeObjectURL(a.href);
   setStatus("下载完成，共 " + totalBatches + " 批 " + total + " 章。");
@@ -643,34 +648,34 @@ async function downloadBook(request, ctx, env) {
 
   const chapters = await mapLimit(selected, 4, async (chapter) => {
     try {
-      const raw = await fetchChapter(chapter.id, ctx, request.url);
-      const title = raw.title || chapter.title || chapter.id;
+      const { content } = await fetchChapter(chapter.id, ctx, request.url);
+      const title = chapter.title || chapter.id;
       return {
         id: chapter.id,
         title,
-        plain: cleanPlain(raw.content || "", title)
+        plain: cleanPlain(content || "")
       };
     } catch (error) {
       return {
         id: chapter.id,
         title: chapter.title || chapter.id,
-        plain: "　　[本章下载失败：" + (error.message || String(error)) + "]"
+        plain: "[本章下载失败：" + (error.message || String(error)) + "]"
       };
     }
   });
 
   const filenameBase = safeFileName(book.meta.bookName || book.bookId);
-  const body = buildTxt(book, chapters, start, end);
+  const body = buildTxt(chapters);
   return fileResponse(new TextEncoder().encode(body), filenameBase + ".txt", "text/plain; charset=UTF-8");
 }
 
 async function loadBook(input, env, ctx, requestUrl) {
-  const bookId = tryParseBookId(input);
+  const bookId = parseBookId(input);
   if (!bookId) {
     return await searchBooks(input, env, ctx, requestUrl);
   }
   const cacheKey = ctx && requestUrl
-    ? new Request(new URL("/cache/book/" + encodeURIComponent(bookId) + "?meta=" + (getOiapiKey(env) ? "1" : "0"), requestUrl), {
+    ? new Request(new URL("/cache/book/" + encodeURIComponent(bookId), requestUrl), {
         method: "GET"
       })
     : null;
@@ -681,7 +686,7 @@ async function loadBook(input, env, ctx, requestUrl) {
 
   const [chapters, info] = await Promise.all([
     fetchDirectory(bookId),
-    fetchBookInfo(bookId, env)
+    fetchBookInfo(bookId)
   ]);
   const book = {
     bookId,
@@ -697,32 +702,38 @@ async function loadBook(input, env, ctx, requestUrl) {
   return book;
 }
 
-async function fetchBookInfo(bookId, env) {
-  const key = getOiapiKey(env);
-  if (!key) {
-    return { title: bookId, apiWarning: "未配置 OIAPI 环境变量，无法获取小说信息。请在 Cloudflare Worker 设置中添加环境变量 OIAPI。" };
-  }
+async function fetchBookInfo(bookId) {
   try {
-    const url = "https://oiapi.net/api/FqRead?id=" + encodeURIComponent(bookId) + "&key=" + encodeURIComponent(key);
+    const url = "https://tt.sjmyzq.cn/api/detail?book_id=" + encodeURIComponent(bookId);
     const res = await fetch(url, {
       headers: { accept: "application/json", "user-agent": USER_AGENT }
     });
-    if (!res.ok) return { title: bookId, apiWarning: "小说信息接口返回 " + res.status };
-    const json = await res.json();
-    if (json.code !== 1 || !json.data) return { title: bookId, apiWarning: json.message || "接口返回异常" };
-    const d = json.data;
+    if (!res.ok) return { title: bookId, apiWarning: "书籍信息接口返回 " + res.status };
+    const body = await res.json();
+    const d = body?.data?.data;
+    if (!d) return { title: bookId, apiWarning: "接口返回异常" };
     return {
-      remoteId: d.id || bookId,
-      title: d.title || bookId,
+      title: d.book_name || bookId,
       author: d.author || "",
-      docs: d.docs || "",
-      thumb: d.thumb || "",
-      serial: d.serial || 0,
+      docs: d.abstract || "",
+      thumb: d.thumb_url || "",
+      serial: d.serial_count || 0,
       word_number: d.word_number || "",
-      read_count: d.read_count || ""
+      read_count: d.read_count || "",
+      category: d.category || "",
+      score: d.score || "",
+      update_status: d.status || "",
+      reader_uv_sum_daily: d.reader_uv_sum_daily || "",
+      reader_uv_14day: d.reader_uv_14day || "",
+      all_bookshelf_count: d.all_bookshelf_count || "",
+      listen_count: d.listen_count || "",
+      quality_rate: d.quality_rate || "",
+      create_time: d.create_time || "",
+      keep_update_days: d.keep_update_days || "",
+      last_publish_time: d.last_publish_time ? new Date(Number(d.last_publish_time) * 1000).toISOString().slice(0, 10) : ""
     };
   } catch (e) {
-    return { title: bookId, apiWarning: "获取小说信息失败：" + e.message };
+    return { title: bookId, apiWarning: "获取书籍信息失败：" + e.message };
   }
 }
 
@@ -731,7 +742,7 @@ async function searchBooks(input, env, ctx, requestUrl) {
   if (!keyword) throw new Error("请输入小说标题、ID 或链接");
 
   const cacheKey = ctx && requestUrl
-    ? new Request(new URL("/cache/search/" + encodeURIComponent(keyword) + "?meta=" + (getOiapiKey(env) ? "1" : "0"), requestUrl), {
+    ? new Request(new URL("/cache/search/" + encodeURIComponent(keyword) + "?meta=" + (env.OIAPI ? "1" : "0"), requestUrl), {
         method: "GET"
       })
     : null;
@@ -740,7 +751,7 @@ async function searchBooks(input, env, ctx, requestUrl) {
     if (cached) return await cached.json();
   }
 
-  const key = getOiapiKey(env);
+  const key = env.OIAPI;
   if (!key) {
     throw new Error("未配置 OIAPI 环境变量，无法按标题搜索小说");
   }
@@ -783,31 +794,16 @@ function normalizeSearchBook(item) {
   };
 }
 
-function getOiapiKey(env) {
-  return env && env.OIAPI;
-}
-
-function tryParseBookId(input) {
-  try {
-    return parseBookId(input);
-  } catch {
-    return "";
-  }
-}
-
 function parseBookId(input) {
   const trimmed = String(input || "").trim();
-  if (!trimmed) throw new Error("请输入小说 ID 或链接");
+  if (!trimmed) return "";
   if (/^\d+$/.test(trimmed)) return trimmed;
 
   const target = trimmed.match(/https?:\/\/\S+/i)?.[0] || trimmed;
-  const queryId = target.match(/[?&](?:book_id|bookId)=(\d+)/i)?.[1];
-  if (queryId) return queryId;
-
   const pageId = target.match(/\/page\/(\d+)/i)?.[1];
   if (pageId) return pageId;
 
-  throw new Error("无法解析小说 ID");
+  return "";
 }
 
 async function fetchDirectory(bookId) {
@@ -821,68 +817,18 @@ async function fetchDirectory(bookId) {
   });
   if (!res.ok) throw new Error("获取目录失败：" + res.status);
   const data = await res.json();
-  const array = findChapterArray(data);
+  const list = data?.data?.chapterListWithVolume;
+  if (!Array.isArray(list) || !list.length) throw new Error("目录为空或无法解析章节");
   const chapters = [];
-  const seen = new Set();
-  for (const item of array) {
-    const chapter = parseChapterRef(item);
-    if (chapter && !seen.has(chapter.id)) {
-      seen.add(chapter.id);
-      chapters.push(chapter);
+  for (const volume of list) {
+    for (const item of volume) {
+      const id = item?.itemId || "";
+      const title = item?.title || id;
+      if (id) chapters.push({ id, title });
     }
   }
   if (!chapters.length) throw new Error("目录为空或无法解析章节");
   return chapters;
-}
-
-function findChapterArray(data) {
-  const root = data?.data || data;
-  const keys = ["chapterList", "chapter_list", "chapters", "item_list", "items", "list"];
-  for (const key of keys) {
-    if (Array.isArray(root?.[key])) return root[key];
-  }
-  if (Array.isArray(root?.chapterListWithVolume)) {
-    return root.chapterListWithVolume.flatMap((group) => Array.isArray(group) ? group : []);
-  }
-  if (root?.data) {
-    for (const key of keys) {
-      if (Array.isArray(root.data[key])) return root.data[key];
-    }
-  }
-
-  let best = [];
-  const walk = (value) => {
-    if (Array.isArray(value)) {
-      if (value.some((item) => item && typeof item === "object" && pickString(item, ID_KEYS))) {
-        if (value.length > best.length) best = value;
-      }
-      for (const item of value) walk(item);
-    } else if (value && typeof value === "object") {
-      for (const item of Object.values(value)) walk(item);
-    }
-  };
-  walk(root);
-  return best;
-}
-
-const ID_KEYS = ["item_id", "itemId", "chapter_id", "chapterId", "catalog_id", "catalogId", "id"];
-const TITLE_KEYS = ["title", "chapter_title", "chapterTitle", "name", "chapter_name"];
-
-function parseChapterRef(value) {
-  const maps = collectObjects(value);
-  const idMap = maps.find((item) => pickString(item, ID_KEYS));
-  const id = pickString(idMap, ID_KEYS);
-  if (!id) return null;
-  const title = pickString(idMap, TITLE_KEYS) || maps.map((item) => pickString(item, TITLE_KEYS)).find(Boolean) || id;
-  return { id, title };
-}
-
-function collectObjects(value, out = []) {
-  if (value && typeof value === "object") {
-    if (!Array.isArray(value)) out.push(value);
-    for (const child of Object.values(value)) collectObjects(child, out);
-  }
-  return out;
 }
 
 function pickString(obj, keys) {
@@ -910,48 +856,29 @@ async function fetchChapter(chapterId, ctx, requestUrl) {
   });
   if (!res.ok) throw new Error("正文接口失败：" + res.status);
   const data = await res.json();
-  const payload = {
-    title: data?.data?.title || data?.data?.origin_chapter_title || "",
-    content: data?.data?.content || ""
-  };
-  if (!payload.content) throw new Error("正文为空");
+  const content = data?.data?.content || "";
+  if (!content) throw new Error("正文为空");
 
-  const response = json(payload, 200, {
+  const response = json({ content }, 200, {
     "cache-control": "public, max-age=604800"
   });
   ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
-  return payload;
+  return { content };
 }
 
-function cleanPlain(raw, title = "") {
-  const normalized = String(raw || "")
-    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<p[^>]*>/gi, "\n");
-  const withoutTags = decodeEntities(normalized.replace(/<[^>]+>/g, ""));
-  const lines = withoutTags
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const titleNorm = normalizeTitle(title);
-  while (lines.length && titleNorm && normalizeTitle(lines[0]) === titleNorm) {
-    lines.shift();
-  }
-  return lines.map((line) => "　　" + line).join("\n\n");
-}
-
-function buildTxt(book, chapters, start, end) {
+function cleanPlain(raw) {
+  const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
   const lines = [];
-  lines.push("书名：" + (book.meta.bookName || book.bookId));
-  lines.push("book_id=" + book.bookId);
-  lines.push("章节：" + book.chapters.length);
-  lines.push("导出范围：" + start + "-" + end);
-  lines.push("");
-  lines.push("========================================");
+  let match;
+  while ((match = pRegex.exec(raw)) !== null) {
+    const text = decodeEntities(match[1]).replace(/\s+/g, " ").trim();
+    if (text) lines.push("　　" + text);
+  }
+  return lines.join("\n\n");
+}
+
+function buildTxt(chapters) {
+  const lines = [];
   for (const chapter of chapters) {
     lines.push("");
     lines.push(chapter.title);
@@ -986,10 +913,6 @@ function decodeEntities(value) {
     .replace(/&#39;/g, "'")
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)));
-}
-
-function normalizeTitle(value) {
-  return String(value || "").replace(/\s+/g, "").replace(/[：:，,。.!！?？]/g, "").trim();
 }
 
 function safeFileName(value) {
