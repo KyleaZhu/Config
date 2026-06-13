@@ -766,7 +766,16 @@ async function searchBooks(input, env, ctx, requestUrl) {
   const result = {
     type: "search",
     keyword,
-    results: data.data.map(normalizeSearchBook).filter((item) => item.id)
+    results: data.data.map((item) => ({
+      id: item.id || "",
+      title: item.title || "",
+      author: item.author || "",
+      docs: item.docs || "",
+      thumb: item.thumb || "",
+      serial: item.serial || "",
+      word_number: item.word_number || "",
+      read_count: item.read_count || ""
+    })).filter((item) => item.id)
   };
   if (cacheKey) {
     const response = json(result, 200, {
@@ -775,19 +784,6 @@ async function searchBooks(input, env, ctx, requestUrl) {
     ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
   }
   return result;
-}
-
-function normalizeSearchBook(item) {
-  return {
-    id: pickString(item, ["id", "book_id", "bookId"]),
-    title: pickString(item, ["title", "book_name", "bookName", "name"]),
-    author: pickString(item, ["author", "author_name", "authorName"]),
-    docs: pickString(item, ["docs", "abstract", "description", "desc"]),
-    thumb: pickString(item, ["thumb", "cover", "cover_url", "coverUrl"]),
-    serial: pickString(item, ["serial", "chapter_count", "chapterCount"]),
-    word_number: pickString(item, ["word_number", "wordNumber", "words"]),
-    read_count: pickString(item, ["read_count", "readCount"])
-  };
 }
 
 function parseBookId(input) {
@@ -825,15 +821,6 @@ async function fetchDirectory(bookId) {
   }
   if (!chapters.length) throw new Error("目录为空或无法解析章节");
   return chapters;
-}
-
-function pickString(obj, keys) {
-  for (const key of keys) {
-    const value = obj?.[key];
-    if (typeof value === "string" && value.trim()) return value.trim();
-    if (typeof value === "number") return String(value);
-  }
-  return "";
 }
 
 async function fetchChapter(chapterId, ctx, requestUrl) {
