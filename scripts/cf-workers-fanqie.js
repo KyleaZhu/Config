@@ -585,7 +585,7 @@ downloadBtn.addEventListener("click", async () => {
       const txt = await res.text();
       allParts.push(txt);
     } catch (e) {
-      allParts.push("[第 " + i + "-" + batchEnd + " 章下载失败：" + e.message + "]");
+      allParts.push("\\n[第 " + i + "-" + batchEnd + " 章下载失败：" + e.message + "]");
     }
     if (batchEnd < end) await new Promise(r => setTimeout(r, 500));
   }
