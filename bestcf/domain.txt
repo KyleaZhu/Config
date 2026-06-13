@@ -5,6 +5,7 @@ npmjs.com#npm
 deepin.org#deepin
 52pojie.org#吾爱破解
 shopify.com#Shopify
+kwglobal.com#KnowledqeWorks
 decathlon.qa#Decathlon
 mdpi-res.com#MDPI
 singapore.com#Singapore
