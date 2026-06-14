@@ -1,3 +1,7 @@
+cm.xdu.qzz.io#中国移动
+ct.xdu.qzz.io#中国电信
+cu.xdu.qzz.io#中国联通
+
 ip.sb#IP.SB
 time.is#Time.is
 visa.com#Visa
