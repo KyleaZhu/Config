@@ -32,7 +32,7 @@ export default {
   async scheduled(event, env, ctx) {
     const config = CONFIGS[event.cron];
     if (config) {
-      ctx.waitUntil(syncDomain(config.subdomain, config.url, env));
+      await syncDomain(config.subdomain, config.url, env);
     }
   },
 
@@ -100,14 +100,20 @@ async function syncDomain(subdomain, url, env) {
   const toDelete = existingRecords.filter(e => !newRecords.some(n => n.type === e.type && n.content.toLowerCase() === e.content.toLowerCase()));
   const toAdd = newRecords.filter(n => !existingRecords.some(e => e.type === n.type && e.content.toLowerCase() === n.content.toLowerCase()));
 
-  const deletePromises = toDelete.map(r => fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records/${r.id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}` } }));
-  const addPromises = toAdd.map(r => fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ type: r.type, name: subdomain, content: r.content, ttl: 1, proxied: false })
-  }));
+  for (const r of toDelete) {
+    await fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records/${r.id}`, { 
+      method: "DELETE", 
+      headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}` } 
+    });
+  }
 
-  await Promise.all([...deletePromises, ...addPromises]);
+  for (const r of toAdd) {
+    await fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ type: r.type, name: subdomain, content: r.content, ttl: 1, proxied: false })
+    });
+  }
 }
 
 function parseIPs(text) {
@@ -211,7 +217,7 @@ function renderPremiumHTML(reports, allSynced) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Cloudflare 优选域名自动化平台</title>
+      <title>Cloudflare 优选域名</title>
       <script src="https://cdn.tailwindcss.com"></script>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
       <style>
