@@ -1,10 +1,4 @@
-const CONFIGS = {
-  "0 1,4,7,10,13,16,19,22 * * *": { subdomain: "cm.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/cmcc-ip.txt" },
-  "5 1,4,7,10,13,16,19,22 * * *": { subdomain: "ct.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/ctcc-ip.txt" },
-  "10 1,4,7,10,13,16,19,22 * * *": { subdomain: "cu.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/cucc-ip.txt" }
-};
-
-const DASHBOARD_LIST = [
+const DOMAINS = [
   { 
     name: "中国移动", 
     subdomain: "cm.bestcf.xdu.qzz.io", 
@@ -27,10 +21,9 @@ const DASHBOARD_LIST = [
 
 export default {
   async scheduled(event, env, ctx) {
-    const config = CONFIGS[event.cron];
-    if (config) {
-      await syncDomain(config.subdomain, config.url, env);
-    }
+    await Promise.all(DOMAINS.map(item =>
+      syncDomain(item.subdomain, item.url, env)
+    ));
   },
 
   async fetch(request, env, ctx) {
@@ -42,7 +35,7 @@ export default {
       const reports = [];
       let allSynced = true;
 
-      for (const item of DASHBOARD_LIST) {
+      for (const item of DOMAINS) {
         const ghRes = await fetch(item.url);
         const ghText = ghRes.ok ? await ghRes.text() : "";
         const ghIPs = parseIPs(ghText);
@@ -97,20 +90,22 @@ async function syncDomain(subdomain, url, env) {
   const toDelete = existingRecords.filter(e => !newRecords.some(n => n.type === e.type && n.content.toLowerCase() === e.content.toLowerCase()));
   const toAdd = newRecords.filter(n => !existingRecords.some(e => e.type === n.type && e.content.toLowerCase() === n.content.toLowerCase()));
 
-  for (const r of toDelete) {
-    await fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records/${r.id}`, { 
-      method: "DELETE", 
-      headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}` } 
-    });
-  }
+  if (toDelete.length === 0 && toAdd.length === 0) return;
 
-  for (const r of toAdd) {
-    await fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records`, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ type: r.type, name: subdomain, content: r.content, ttl: 1, proxied: false })
-    });
-  }
+  await fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records/batch`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      deletes: toDelete.map(r => ({ id: r.id })),
+      posts: toAdd.map(r => ({
+        type: r.type,
+        name: subdomain,
+        content: r.content,
+        ttl: 1,
+        proxied: false
+      }))
+    })
+  });
 }
 
 function parseIPs(text) {
@@ -170,7 +165,6 @@ function renderPremiumHTML(reports, allSynced) {
           </div>
           
           <div class="mb-5 relative group/copy">
-            <p class="text-xs text-slate-400 mb-1.5 font-medium tracking-wide uppercase">解析子域名</p>
             <div onclick="copyText('${r.subdomain}', this)" class="cursor-pointer relative flex items-center justify-between bg-slate-50 hover:bg-slate-100/70 border border-slate-100/70 hover:border-slate-200 px-3 py-2 rounded-xl transition-all duration-200">
               <code class="text-xl font-bold text-slate-900 font-mono break-all tracking-tight select-none">${r.subdomain}</code>
               <svg class="w-4 h-4 text-slate-400 group-hover/copy:text-slate-600 flex-shrink-0 ml-2 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-6a2 2 0 00-2 2zM8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
