@@ -10,6 +10,7 @@ deepin.org#deepin
 52pojie.org#吾爱破解
 kwglobal.com#KnowledqeWorks
 mdpi-res.com#MDPI
+myshopify.com#Shopify
 singapore.com#Singapore
 igg-games.com#IGGGAMES
 researchgate.net#ResearchGate
