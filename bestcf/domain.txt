@@ -5,6 +5,7 @@ cu.bestcf.xdu.qzz.io#中国联通
 ip.sb#IP.SB
 acck.io#Acck
 time.is#Time.is
+shlii.io#IncuShlii
 visa.com#Visa
 npmjs.com#npm
 deepin.org#deepin
