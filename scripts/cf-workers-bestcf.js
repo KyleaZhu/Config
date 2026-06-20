@@ -1,7 +1,8 @@
 const DOMAINS = [
   { subdomain: "cm.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/cmcc-ip.txt" },
   { subdomain: "ct.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/ctcc-ip.txt" },
-  { subdomain: "cu.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/cucc-ip.txt" }
+  { subdomain: "cu.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/cucc-ip.txt" },
+  { subdomain: "cmin2.bestcf.xdu.qzz.io", url: "https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/cmin2-ip.txt" }
 ];
 
 export default {
