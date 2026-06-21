@@ -1,5 +1,5 @@
 import{connect}from'cloudflare:sockets';
-const d=new TextDecoder(),e=new TextEncoder(),i='fuckseu',u='c4a3829c-a23c-41de-ba52-e9284bd122d4',r='us.proxyip.xdu.qzz.io',n='BerserkTCP',g='https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/ip.txt';
+const d=new TextDecoder(),e=new TextEncoder(),i='fuckseu',u='c4a3829c-a23c-41de-ba52-e9284bd122d4',r='sjc.o00o.ooo',n='BerserkTCP',g='https://raw.githubusercontent.com/KyleaZhu/Config/main/bestcf/ip.txt';
 const U=((h,a=new Uint8Array(16))=>{for(let i=0;i<32;i+=2)a[i>>1]=parseInt(h.substr(i,2),16);return a})(u.replace(/-/g,''));
 const c=b=>{for(let i=0;i<16;i++)if(b[i]!==U[i])return 0;return 1};
 const t=async(h,o,a,retry=false)=>{try{const s=await connect({hostname:h,port:o});return await s.opened,{tcpSocket:s,initialData:a}}catch{}if(r&&!retry){return t(r,443,a,true)}throw new Error('连接失败')};
