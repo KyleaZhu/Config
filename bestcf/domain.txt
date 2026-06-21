@@ -10,3 +10,4 @@ deepin.org#deepin
 myshopify.com#Shopify
 researchgate.net#ResearchGate
 digitalocean.com#DigitalOcean
+cloudflare-ip.mofashi.ltd#魔法师
