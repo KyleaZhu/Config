@@ -55,3 +55,12 @@ jobs:
           git add bestcf/cmcc-ip.txt bestcf/cucc-ip.txt bestcf/ctcc-ip.txt
           git commit -m "Auto update Bestip: $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
           git push origin main
+
+      - name: Delete releases and workflows runs
+        uses: ophub/delete-releases-workflows@main
+        with:
+          delete_releases: false
+          releases_keep_latest: 10
+          delete_workflows: true
+          workflows_keep_day: 1
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
