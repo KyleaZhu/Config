@@ -7,15 +7,16 @@ const DOMAINS = [
 
 export default {
   async scheduled(event, env, ctx) {
-    await Promise.all(DOMAINS.map(item =>
-      syncDomain(item.subdomain, item.url, env)
+    const results = await Promise.all(DOMAINS.map(item =>
+      syncDomain(item.subdomain, item.url, env).then(r => ({ ...r, subdomain: item.subdomain }))
     ));
+    await sendTelegramNotification(results, env);
   }
 };
 
 async function syncDomain(subdomain, url, env) {
   const response = await fetch(url);
-  if (!response.ok) return;
+  if (!response.ok) return { added: 0, deleted: 0, error: `Fetch IP list failed: ${response.status}` };
   const text = await response.text();
   const newRecords = parseIPs(text);
 
@@ -27,7 +28,7 @@ async function syncDomain(subdomain, url, env) {
   const toDelete = existingRecords.filter(e => !newRecords.some(n => n.type === e.type && n.content.toLowerCase() === e.content.toLowerCase()));
   const toAdd = newRecords.filter(n => !existingRecords.some(e => e.type === n.type && e.content.toLowerCase() === n.content.toLowerCase()));
 
-  if (toDelete.length === 0 && toAdd.length === 0) return;
+  if (toDelete.length === 0 && toAdd.length === 0) return { added: 0, deleted: 0, error: null };
 
   const batchRes = await fetch(`https://api.cloudflare.com/client/v4/zones/${env.ZONE_ID}/dns_records/batch`, {
     method: "POST",
@@ -44,10 +45,36 @@ async function syncDomain(subdomain, url, env) {
     })
   });
 
-  if (!batchRes.ok) {
-    const errText = await batchRes.text();
-    console.error(`Batch sync failed for ${subdomain}:`, errText);
+  return { added: toAdd.length, deleted: toDelete.length, error: null };
+}
+
+async function sendTelegramNotification(results, env) {
+  const botToken = env.TELEGRAM_BOT_TOKEN;
+  const chatId = env.TELEGRAM_CHAT_ID;
+  if (!botToken || !chatId) return;
+
+  const lines = [];
+
+  for (const r of results) {
+    if (r.error) {
+      lines.push(`❌ ${r.subdomain}: ${r.error}`);
+    } else if (r.added > 0 || r.deleted > 0) {
+      lines.push(`🔄 ${r.subdomain}: +${r.added} / -${r.deleted}`);
+    } else {
+      lines.push(`✅ ${r.subdomain}: 无变化`);
+    }
   }
+
+  const message = lines.join('\n');
+
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: message
+    })
+  });
 }
 
 function parseIPs(text) {
