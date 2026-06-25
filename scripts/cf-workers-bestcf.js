@@ -57,11 +57,11 @@ async function sendTelegramNotification(results, env) {
 
   for (const r of results) {
     if (r.error) {
-      lines.push(`❌ ${r.subdomain}: ${r.error}`);
+      lines.push(`❌ <code>${r.subdomain}</code> ${r.error}`);
     } else if (r.added > 0 || r.deleted > 0) {
-      lines.push(`🔄 ${r.subdomain}: +${r.added} / -${r.deleted}`);
+      lines.push(`🔄 <code>${r.subdomain}</code> +${r.added} / -${r.deleted}`);
     } else {
-      lines.push(`✅ ${r.subdomain}: 无变化`);
+      lines.push(`✅ <code>${r.subdomain}</code> 无变化`);
     }
   }
 
@@ -72,7 +72,8 @@ async function sendTelegramNotification(results, env) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: chatId,
-      text: message
+      text: message,
+      parse_mode: "HTML"
     })
   });
 }
