@@ -6,7 +6,6 @@ acck.io#Acck
 visa.com#Visa
 npmjs.com#npm
 deepin.org#deepin
-www.dbs.com#DBS
 52pojie.org#吾爱破解
 myshopify.com#Shopify
 researchgate.net#ResearchGate
