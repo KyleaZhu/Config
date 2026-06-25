@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-06-09
+# Date: 2026-06-25
 
 mixed-port: 7890
 unified-delay: true
@@ -62,15 +62,18 @@ dns:
   fake-ip-filter:
     - "geosite: cn, private, fakeip-filter"
   nameserver:
-    - https://cloudflare-dns.com/dns-query
-    - https://dns.google/dns-query
-    - https://doh.dns.sb/dns-query
-  nameserver-policy:
-    "geosite: cn":
-      - https://dns.alidns.com/dns-query
-      - https://sm2.doh.pub/dns-query
-      - https://doh.360.cn/dns-query
-      - https://doh.onedns.net/dns-query
+    - https://blog.xdu.qzz.io/cloudflare
+    - https://blog.xdu.qzz.io/google
+    - https://blog.xdu.qzz.io/dnssb
+#    - https://cloudflare-dns.com/dns-query
+#    - https://dns.google/dns-query
+#    - https://doh.dns.sb/dns-query
+#  nameserver-policy:
+#    "geosite: cn":
+#      - https://dns.alidns.com/dns-query
+#      - https://sm2.doh.pub/dns-query
+#      - https://doh.360.cn/dns-query
+#      - https://doh.onedns.net/dns-query
 
 Providers: &Providers {type: http, interval: 86400, health-check: {enable: true, url: 'https://connectivitycheck.gstatic.com/generate_204', interval: 300}, exclude-filter: '(?i)流量|倍率|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|特别|访问|支持|教程|关注|更新|作者|加入|COM|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author'}
 Select: &Select {type: select, interval: 300, lazy: true, url: 'https://connectivitycheck.gstatic.com/generate_204'}
@@ -130,7 +133,6 @@ proxy-providers:
 proxy-groups:
   - {name: 节点选择, type: select, proxies: [香港自动, 日本自动, 坡县自动, 美国自动], icon: https://testingcf.jsdelivr.net/gh/Semporia/Hand-Painted-icon@master/Universal/Airport.png}
   - {name: 人工智障, <<: *Select, use: *Used, filter: *FilterUS, icon: https://testingcf.jsdelivr.net/gh/NB921/picture@main/chatgpt.png}
-  - {name: 电报信息, <<: *Select, use: *Used, filter: *FilterSG, icon: https://testingcf.jsdelivr.net/gh/NB921/picture@main/Telegram.png}
   - {name: 香港自动, <<: *UrlTest, use: *Used, filter: *FilterHK}
   - {name: 日本自动, <<: *UrlTest, use: *Used, filter: *FilterJP}
   - {name: 坡县自动, <<: *UrlTest, use: *Used, filter: *FilterSG}
@@ -145,10 +147,7 @@ rules:
   - RULE-SET, anti-AD, REJECT
   - RULE-SET, AdRules, REJECT
   - DomainSuffix, xdu.qzz.io, DIRECT
-  - DomainSuffix, 402.dpdns.org, DIRECT
   - DomainSuffix, immersivetranslate.com, DIRECT
-  - GEOIP, telegram, 电报信息
-  - GEOSITE, telegram, 电报信息
   - GEOSITE, ai, 人工智障
   - GEOSITE, games-cn, DIRECT
   - GEOSITE, cn, DIRECT
