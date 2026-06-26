@@ -2,7 +2,7 @@ import { connect } from 'cloudflare:sockets'
 
 // configurations
 const UUID = '5e43fca9-456b-4a62-8003-c94242ddbe6c' // vless UUID
-const PROXY = 'sjc.o00o.ooo' // (optional) reverse proxy for CF websites. e.g. ProxyIP.US.CMLiussss.net
+const PROXY = 'ProxyIP.US.CMLiussss.net' // (optional) reverse proxy for CF websites. e.g. ProxyIP.US.CMLiussss.net
 
 // source code
 const BUFFER_SIZE = 4 * 1024 // download/upload buffer size in bytes
