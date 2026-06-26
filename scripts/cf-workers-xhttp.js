@@ -4,8 +4,7 @@ import { connect } from 'cloudflare:sockets'
 const UUID = '5e43fca9-456b-4a62-8003-c94242ddbe6c' // vless UUID
 const PROXY = 'ProxyIP.US.CMLiussss.net' // (optional) reverse proxy for CF websites. e.g. ProxyIP.US.CMLiussss.net
 
-// source code
-const BUFFER_SIZE = 4 * 1024 // download/upload buffer size in bytes
+const BUFFER_SIZE = 32 * 1024 // download/upload buffer size in bytes
 
 function validate_uuid(id, uuid) {
     for (let index = 0; index < 16; index++) {
@@ -16,21 +15,6 @@ function validate_uuid(id, uuid) {
         }
     }
     return true
-}
-
-function concat_typed_arrays(first, ...args) {
-    let len = first.length
-    for (let a of args) {
-        len += a.length
-    }
-    const r = new first.constructor(len)
-    r.set(first, 0)
-    len = first.length
-    for (let a of args) {
-        r.set(a, len)
-        len += a.length
-    }
-    return r
 }
 
 function parse_uuid(uuid) {
@@ -47,105 +31,93 @@ function get_buffer(size) {
     return new Uint8Array(new ArrayBuffer(size || BUFFER_SIZE))
 }
 
-// enums
+const decoder = new TextDecoder()
+
 const ADDRESS_TYPE_IPV4 = 1
 const ADDRESS_TYPE_URL = 2
 const ADDRESS_TYPE_IPV6 = 3
 
 async function read_vless_header(readable, uuid_str) {
     const reader = readable.getReader({ mode: 'byob' })
+    const MAX_HEADER = 512
+    let buf = new Uint8Array(new ArrayBuffer(MAX_HEADER))
+    let cursor = 0
+    let done = false
 
-    let r = await reader.readAtLeast(1 + 16 + 1, get_buffer())
-    let rlen = 0
-    let idx = 0
-    let cache = r.value
-    rlen += r.value.length
-
-    const version = cache[0]
-    const id = cache.slice(1, 1 + 16)
-    const uuid = parse_uuid(uuid_str)
-    if (!validate_uuid(id, uuid)) {
-        return `invalid UUID`
+    const fill = async (needed) => {
+        if (done || cursor >= needed) return true
+        if (cursor + needed > buf.length) {
+            const tmp = new Uint8Array(new ArrayBuffer(Math.max(buf.length, cursor + needed) * 2))
+            tmp.set(buf.subarray(0, cursor))
+            buf = tmp
+        }
+        const r = await reader.readAtLeast(
+            needed - cursor,
+            new Uint8Array(buf.buffer, cursor, buf.length - cursor),
+        )
+        done = r.done
+        if (!r.value?.byteLength) return false
+        buf = new Uint8Array(r.value.buffer)
+        cursor += r.value.byteLength
+        return cursor >= needed
     }
-    const pb_len = cache[1 + 16]
+
+    if (!await fill(1 + 16 + 1)) return `header too short`
+
+    const version = buf[0]
+    const id = buf.slice(1, 1 + 16)
+    const uuid = parse_uuid(uuid_str)
+    if (!validate_uuid(id, uuid)) return `invalid UUID`
+
+    const pb_len = buf[1 + 16]
     const addr_plus1 = 1 + 16 + 1 + pb_len + 1 + 2 + 1
 
-    if (addr_plus1 + 1 > rlen) {
-        if (r.done) {
-            return `header too short`
-        }
-        idx = addr_plus1 + 1 - rlen
-        r = await reader.readAtLeast(idx, get_buffer())
-        rlen += r.value.length
-        cache = concat_typed_arrays(cache, r.value)
-    }
+    if (!await fill(addr_plus1 + 1)) return `header too short`
 
-    const cmd = cache[1 + 16 + 1 + pb_len]
-    if (cmd !== 1) {
-        return `unsupported command: ${cmd}`
-    }
-    const port = (cache[addr_plus1 - 1 - 2] << 8) + cache[addr_plus1 - 1 - 1]
-    const atype = cache[addr_plus1 - 1]
+    const cmd = buf[1 + 16 + 1 + pb_len]
+    if (cmd !== 1) return `unsupported command: ${cmd}`
+
+    const port = (buf[addr_plus1 - 1 - 2] << 8) + buf[addr_plus1 - 1 - 1]
+    const atype = buf[addr_plus1 - 1]
+
     let header_len = -1
     if (atype === ADDRESS_TYPE_IPV4) {
         header_len = addr_plus1 + 4
     } else if (atype === ADDRESS_TYPE_IPV6) {
         header_len = addr_plus1 + 16
     } else if (atype === ADDRESS_TYPE_URL) {
-        header_len = addr_plus1 + 1 + cache[addr_plus1]
+        header_len = addr_plus1 + 1 + buf[addr_plus1]
     }
+    if (header_len < 0) return 'read address type failed'
 
-    if (header_len < 0) {
-        return 'read address type failed'
-    }
-
-    idx = header_len - rlen
-    if (idx > 0) {
-        if (r.done) {
-            return `read address failed`
-        }
-        r = await reader.readAtLeast(idx, get_buffer())
-        rlen += r.value.length
-        cache = concat_typed_arrays(cache, r.value)
-    }
+    if (!await fill(header_len)) return `read address failed`
 
     let hostname = ''
-    idx = addr_plus1
+    const idx = addr_plus1
     switch (atype) {
         case ADDRESS_TYPE_IPV4:
-            hostname = cache.slice(idx, idx + 4).join('.')
+            hostname = buf.slice(idx, idx + 4).join('.')
             break
         case ADDRESS_TYPE_URL:
-            hostname = new TextDecoder().decode(
-                cache.slice(idx + 1, idx + 1 + cache[idx]),
-            )
+            hostname = decoder.decode(buf.slice(idx + 1, idx + 1 + buf[idx]))
             break
         case ADDRESS_TYPE_IPV6:
-            hostname = cache
-                .slice(idx, idx + 16)
-                .reduce(
-                    (s, b2, i2, a) =>
-                        i2 % 2
-                            ? s.concat(((a[i2 - 1] << 8) + b2).toString(16))
-                            : s,
-                    [],
-                )
+            hostname = buf.slice(idx, idx + 16)
+                .reduce((s, b2, i2, a) =>
+                    i2 % 2 ? s.concat(((a[i2 - 1] << 8) + b2).toString(16)) : s, [])
                 .join(':')
             break
     }
+    if (hostname.length < 1) return 'failed to parse hostname'
 
-    if (hostname.length < 1) {
-        return 'failed to parse hostname'
-    }
-
-    const data = cache.slice(header_len)
+    const data = buf.slice(header_len, cursor)
     return {
         hostname,
         port,
         data,
         resp: new Uint8Array([version, 0]),
         reader,
-        done: r.done,
+        done,
     }
 }
 
@@ -259,7 +231,6 @@ async function handle_post(request, cfg) {
 
 function create_vless_link(url, uuid) {
     const host = url.hostname
-    const path = url.pathname.endsWith('/') ? url.pathname : `${url.pathname}/`
     const params = new URLSearchParams({
         encryption: 'none',
         security: 'tls',
@@ -267,7 +238,7 @@ function create_vless_link(url, uuid) {
         name: 'XHTTP',
         type: 'xhttp',
         host: host,
-        path: path,
+        path: '/',
         fp: 'firefox',
         alpn: 'h3,h2',
         mode: 'stream-one',
@@ -296,11 +267,7 @@ async function fetch(request, env, ctx) {
                 headers: {
                     'X-Accel-Buffering': 'no',
                     'Cache-Control': 'no-store',
-                    Connection: 'Keep-Alive',
-                    'User-Agent': 'Go-http-client/2.0',
-                    'Content-Type': 'application/grpc',
-                    // 'Content-Type': 'text/event-stream',
-                    // 'Transfer-Encoding': 'chunked',
+                    'Content-Type': 'application/octet-stream',
                 },
             })
         }
