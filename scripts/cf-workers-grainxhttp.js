@@ -1,35 +1,22 @@
 import { connect } from 'cloudflare:sockets'
 
-// configurations
 const UUID = '5e43fca9-456b-4a62-8003-c94242ddbe6c' // vless UUID
-const PROXY = 'ProxyIP.US.CMLiussss.net' // (optional) reverse proxy for CF websites. e.g. ProxyIP.US.CMLiussss.net
+const PROXY = 'ProxyIP.US.CMLiussss.net' // (optional) reverse proxy for CF websites
+const CONCUR = 4 // concurrent connections per race round
+const BUFFER_SIZE = 16 * 1024 // download/upload buffer size in bytes
 
-const BUFFER_SIZE = 32 * 1024 // download/upload buffer size in bytes
-
-function validate_uuid(id, uuid) {
-    for (let index = 0; index < 16; index++) {
-        const v = id[index]
-        const u = uuid[index]
-        if (v !== u) {
-            return false
-        }
-    }
-    return true
+const hex = c => (c > 64 ? c + 9 : c) & 0xF
+const idB = new Uint8Array(16)
+for (let i = 0, p = 0, c, h; i < 16; i++) {
+    c = UUID.charCodeAt(p++);
+    c === 45 && (c = UUID.charCodeAt(p++));
+    h = hex(c);
+    c = UUID.charCodeAt(p++);
+    c === 45 && (c = UUID.charCodeAt(p++));
+    idB[i] = h << 4 | hex(c);
 }
-
-function parse_uuid(uuid) {
-    uuid = uuid.replaceAll('-', '')
-    const r = []
-    for (let index = 0; index < 16; index++) {
-        const v = parseInt(uuid.substr(index * 2, 2), 16)
-        r.push(v)
-    }
-    return r
-}
-
-function get_buffer(size) {
-    return new Uint8Array(new ArrayBuffer(size || BUFFER_SIZE))
-}
+const [I0, I1, I2, I3, I4, I5, I6, I7, I8, I9, I10, I11, I12, I13, I14, I15] = idB
+const matchID = c => c[1] === I0 && c[2] === I1 && c[3] === I2 && c[4] === I3 && c[5] === I4 && c[6] === I5 && c[7] === I6 && c[8] === I7 && c[9] === I8 && c[10] === I9 && c[11] === I10 && c[12] === I11 && c[13] === I12 && c[14] === I13 && c[15] === I14 && c[16] === I15
 
 const decoder = new TextDecoder()
 
@@ -37,7 +24,7 @@ const ADDRESS_TYPE_IPV4 = 1
 const ADDRESS_TYPE_URL = 2
 const ADDRESS_TYPE_IPV6 = 3
 
-async function read_vless_header(readable, uuid_str) {
+async function read_vless_header(readable) {
     const reader = readable.getReader({ mode: 'byob' })
     const MAX_HEADER = 512
     let buf = new Uint8Array(new ArrayBuffer(MAX_HEADER))
@@ -65,9 +52,7 @@ async function read_vless_header(readable, uuid_str) {
     if (!await fill(1 + 16 + 1)) return `header too short`
 
     const version = buf[0]
-    const id = buf.slice(1, 1 + 16)
-    const uuid = parse_uuid(uuid_str)
-    if (!validate_uuid(id, uuid)) return `invalid UUID`
+    if (!matchID(buf)) return `invalid UUID`
 
     const pb_len = buf[1 + 16]
     const addr_plus1 = 1 + 16 + 1 + pb_len + 1 + 2 + 1
@@ -121,7 +106,7 @@ async function read_vless_header(readable, uuid_str) {
     }
 }
 
-async function upload_to_remote(writer, vless) {
+async function upload_to_remote(writer, vless, readBuf) {
     async function inner_upload(d) {
         if (!d) return
         await writer.write(d)
@@ -129,16 +114,19 @@ async function upload_to_remote(writer, vless) {
 
     await inner_upload(vless.data)
     while (!vless.done) {
-        const r = await vless.reader.read(get_buffer())
+        const r = await vless.reader.read(readBuf)
+        if (r.done) break
+        if (!r.value?.byteLength) continue
+        readBuf = new Uint8Array(r.value.buffer)
         await inner_upload(r.value)
-        vless.done = r.done
     }
 }
 
 function create_uploader(vless, writable) {
     const done = new Promise((resolve, reject) => {
         const writer = writable.getWriter()
-        upload_to_remote(writer, vless)
+        const readBuf = new Uint8Array(new ArrayBuffer(BUFFER_SIZE))
+        upload_to_remote(writer, vless, readBuf)
             .then(resolve)
             .catch(reject)
             .finally(() => {
@@ -150,83 +138,81 @@ function create_uploader(vless, writable) {
 }
 
 function create_downloader(resp, remote_readable) {
-    let stream
+    const reader = remote_readable.getReader()
+    let doneResolve
+    const done = new Promise(resolve => { doneResolve = resolve })
 
-    const done = new Promise((resolve, reject) => {
-        stream = new TransformStream(
-            {
-                start(controller) {
-                    controller.enqueue(resp)
-                },
-                transform(chunk, controller) {
-                    controller.enqueue(chunk)
-                },
-                cancel(reason) {
-                    reject(`download cancelled: ${reason}`)
-                },
-            },
-            null,
-            new ByteLengthQueuingStrategy({ highWaterMark: BUFFER_SIZE }),
-        )
-        remote_readable.pipeTo(stream.writable).catch(reject).finally(resolve)
+    const readable = new ReadableStream({
+        start(controller) {
+            controller.enqueue(resp)
+        },
+        async pull(controller) {
+            try {
+                const { done: d, value } = await reader.read()
+                if (d) {
+                    controller.close()
+                    doneResolve()
+                    return
+                }
+                controller.enqueue(value)
+            } catch (err) {
+                controller.error(err)
+                doneResolve()
+            }
+        },
+        cancel(reason) {
+            reader.cancel(reason).finally(doneResolve)
+        }
     })
 
-    return {
-        readable: stream.readable,
-        done,
-    }
+    return { readable, done }
+}
+
+function sprout(hostname, port) {
+    const s = connect({ hostname, port })
+    return s.opened.then(() => s)
+}
+
+function raceSprout(hostname, port, concur) {
+    const ts = Array.from({ length: concur }, () => sprout(hostname, port))
+    return Promise.any(ts).then(w => {
+        ts.forEach(t => t.then(s => s !== w && s.close(), () => {}))
+        return w
+    })
 }
 
 async function connect_to_remote(vless, ...remotes) {
-    const hostname = remotes.shift()
-    if (!hostname || hostname.length < 1) {
-        return null
+    for (const hostname of remotes) {
+        if (!hostname || hostname.length < 1) continue
+        try {
+            const remote = await raceSprout(hostname, vless.port, CONCUR)
+            const uploader = create_uploader(vless, remote.writable)
+            const downloader = create_downloader(vless.resp, remote.readable)
+            return { downloader, uploader }
+        } catch (_) { }
     }
-
-    const retry = () => connect_to_remote(vless, ...remotes)
-    let remote
-    try {
-        remote = connect({ hostname: hostname, port: vless.port })
-        await remote.opened
-    } catch (err) {
-        return await retry()
-    }
-
-    const uploader = create_uploader(vless, remote.writable)
-    const downloader = create_downloader(vless.resp, remote.readable)
-    return {
-        downloader,
-        uploader,
-    }
+    return null
 }
 
-async function handle_xhttp_client(body, cfg) {
-    const vless = await read_vless_header(body, cfg.UUID)
+async function handle_xhttp_client(body) {
+    const vless = await read_vless_header(body)
     if (typeof vless !== 'object' || !vless) {
         return null
     }
 
-    const r = await connect_to_remote(vless, vless.hostname, cfg.PROXY)
+    const r = await connect_to_remote(vless, vless.hostname, PROXY)
     if (r === null) {
         return null
     }
 
-    const connection_closed = new Promise((resolve, _) => {
-        r.downloader.done
-            .catch(() => {})
-            .finally(() => r.uploader.done)
-            .catch(() => {})
-            .finally(() => resolve())
-    })
-
     return {
         readable: r.downloader.readable,
-        closed: connection_closed,
+        upload_done: r.uploader.done,
     }
 }
 
-async function handle_post(request, cfg) {
-    return await handle_xhttp_client(request.body, cfg)
+async function handle_post(request) {
+    return await handle_xhttp_client(request.body)
 }
 
 function create_vless_link(url, uuid) {
@@ -250,19 +236,10 @@ function create_vless_link(url, uuid) {
 }
 
 async function fetch(request, env, ctx) {
-    const cfg = {
-        UUID: env.UUID || UUID,
-        PROXY: env.PROXY || PROXY,
-    }
-
-    if (!cfg.UUID) {
-        return new Response(`Error: UUID is empty`)
-    }
-
     if (request.method === 'POST') {
-        const r = await handle_post(request, cfg)
+        const r = await handle_post(request)
         if (r) {
-            ctx.waitUntil(r.closed)
+            ctx.waitUntil(r.upload_done)
             return new Response(r.readable, {
                 headers: {
                     'X-Accel-Buffering': 'no',
@@ -271,14 +248,15 @@ async function fetch(request, env, ctx) {
                 },
             })
         }
+        return new Response('Upstream unreachable', { status: 502 })
     }
 
     if (request.method === 'GET') {
         const url = new URL(request.url)
         const items = [url.pathname, url.search]
         for (let item of items) {
-            if (item.indexOf(`${cfg.UUID}`) >= 0) {
-                const link = create_vless_link(url, cfg.UUID)
+            if (item.indexOf(UUID) >= 0) {
+                const link = create_vless_link(url, UUID)
                 return new Response(link, {
                     headers: {
                         'Content-Type': 'text/plain; charset=utf-8',
