@@ -7,6 +7,7 @@ visa.com#Visa
 npmjs.com#npm
 deepin.org#deepin
 52pojie.org#吾爱破解
+mdpi-res.com#MDPI
 myshopify.com#Shopify
 researchgate.net#ResearchGate
 digitalocean.com#DigitalOcean
