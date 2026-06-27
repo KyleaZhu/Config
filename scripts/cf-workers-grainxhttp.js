@@ -114,11 +114,16 @@ async function upload_to_remote(writer, vless, readBuf) {
 
     await inner_upload(vless.data)
     while (!vless.done) {
-        const r = await vless.reader.read(readBuf)
-        if (r.done) break
-        if (!r.value?.byteLength) continue
-        readBuf = new Uint8Array(r.value.buffer)
-        await inner_upload(r.value)
+        try {
+            const r = await vless.reader.read(readBuf)
+            if (r.done) break
+            if (!r.value?.byteLength) continue
+            readBuf = new Uint8Array(r.value.buffer)
+            await inner_upload(r.value)
+        } catch (e) {
+            // client disconnected — nothing more to upload
+            break
+        }
     }
 }
 
