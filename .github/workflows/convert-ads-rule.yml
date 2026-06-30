@@ -1,0 +1,82 @@
+name: Update AWAvenueAdsRule JSON
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 每天 UTC 时间凌晨 2 点自动运行
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      TZ: Asia/Shanghai
+    
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Download and Convert Rule List to JSON
+        run: |
+          python -c "
+          import urllib.request
+          import json
+          import os
+
+          url = 'https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list'
+          
+          # 获取 .list 文件内容
+          response = urllib.request.urlopen(url)
+          content = response.read().decode('utf-8')
+
+          domains = []
+          
+          # 解析文件行
+          for line in content.splitlines():
+              line = line.strip()
+              # 忽略注释和空行
+              if not line or line.startswith('#'):
+                  continue
+              
+              # 根据 Surge 规则集的前缀进行映射转换
+              if line.startswith('DOMAIN,'):
+                  domains.append('full:' + line.split(',', 1)[1])
+              elif line.startswith('DOMAIN-SUFFIX,'):
+                  domains.append('domain:' + line.split(',', 1)[1])
+              elif line.startswith('DOMAIN-KEYWORD,'):
+                  domains.append('keyword:' + line.split(',', 1)[1])
+
+          # 按照指定格式构建目标 JSON 对象
+          output = [
+            {
+              'port': '',
+              'outboundTag': 'block',
+              'domain': domains,
+              'enabled': True,
+              'remarks': 'AWAvenueAdsRule'
+            }
+          ]
+
+          # 确保 data 目录存在
+          os.makedirs('data', exist_ok=True)
+
+          # 将生成的字典写入 data 目录下的 JSON 文件
+          with open('data/AWAvenueAdsRule.json', 'w', encoding='utf-8') as f:
+              json.dump(output, f, indent=2, ensure_ascii=False)
+          "
+
+      - name: Git push to main branch
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/AWAvenueAdsRule.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update AWAvenueAdsRule: $(date +'%Y-%m-%d %H:%M:%S')" && git push origin main)
