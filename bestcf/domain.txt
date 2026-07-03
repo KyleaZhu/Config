@@ -4,8 +4,8 @@ cu.bestcf.xdu.qzz.io#中国联通
 
 visa.com#Visa
 doaj.org#DOAJ
-saas.sin.fan#MIYU优选
 mdpi-res.com#MDPI
 www.ntu.edu.sg#NTU
 cf.3666888.xyz#胡桃优选
-cloudflare-ip.mofashi.ltd#魔法师
+saas.sin.fan#MIYU优选
+cloudflare-ip.mofashi.ltd#魔法师优选
