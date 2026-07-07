@@ -4,6 +4,8 @@ cu.bestcf.xdu.qzz.io:443#中国联通
 
 visa.com:443#Visa
 [2620:0127:f00f:5::]:443#Shopify
+[2605:52c0:2:1f5b:be24:11ff:fee9:544b]:443#DMIT
+
 cf.3666888.xyz:443#胡桃优选
 saas.sin.fan:443#MIYU优选
 cloudflare-ip.mofashi.ltd:443#魔法师优选
