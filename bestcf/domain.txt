@@ -3,10 +3,7 @@ ct.bestcf.xdu.qzz.io:443#中国电信
 cu.bestcf.xdu.qzz.io:443#中国联通
 
 visa.com:443#Visa
-doaj.org:443#DOAJ
-www.dbs.com:443#DBS
-mdpi-res.com:443#MDPI
-www.ntu.edu.sg:443#NTU
+[2620:0127:f00f:5::]:443#Shopify
 cf.3666888.xyz:443#胡桃优选
 saas.sin.fan:443#MIYU优选
 cloudflare-ip.mofashi.ltd:443#魔法师优选
