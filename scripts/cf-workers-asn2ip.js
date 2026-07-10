@@ -60,273 +60,140 @@ const HTML = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ASN2IP 工具</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f4f6f8;
-      --panel: #ffffff;
-      --text: #17202a;
-      --muted: #667085;
-      --line: #d9dee7;
-      --accent: #1877f2;
-      --accent-hover: #0f63d6;
-      --danger: #b42318;
-      --ok: #067647;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      padding: 20px;
-    }
-
-    main {
-      width: min(1360px, 100%);
-      min-height: calc(100vh - 40px);
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(280px, 420px) minmax(320px, 1fr);
-      grid-template-rows: minmax(320px, 1fr) minmax(320px, 1fr);
-      gap: 16px;
-    }
-
-    section {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 18px;
-      min-width: 0;
-      box-shadow: 0 10px 32px rgba(16, 24, 40, 0.07);
-      display: flex;
-      flex-direction: column;
-    }
-
-    h1,
-    h2 {
-      margin: 0;
-      letter-spacing: 0;
-      line-height: 1.25;
-    }
-
-    h1 {
-      font-size: 24px;
-    }
-
-    h2 {
-      font-size: 18px;
-    }
-
-    p {
-      margin: 8px 0 18px;
-      color: var(--muted);
-      line-height: 1.55;
-      font-size: 14px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 650;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 12px;
-      color: var(--text);
-      background: #fff;
-      font: 14px/1.5 ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-      outline: none;
-    }
-
-    input:focus,
-    textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.14);
-    }
-
-    #cidrInput {
-      min-height: 150px;
-      resize: vertical;
-    }
-
-    #ipResultText,
-    #asnCidrResultText {
-      flex: 1;
-      min-height: 220px;
-      resize: none;
-    }
-
-    .controls,
-    .result-header {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 14px;
-    }
-
-    .result-header {
-      margin: 0 0 10px;
-    }
-
-    .option {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      color: var(--muted);
-      font-size: 14px;
-      user-select: none;
-    }
-
-    .option input {
-      width: 16px;
-      height: 16px;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      border: 0;
-      border-radius: 6px;
-      background: var(--accent);
-      color: white;
-      padding: 10px 14px;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    button:hover {
-      background: var(--accent-hover);
-    }
-
-    button:disabled {
-      cursor: wait;
-      opacity: 0.72;
-    }
-
-    button.secondary {
-      background: #eef2f7;
-      color: var(--text);
-    }
-
-    button.secondary:hover {
-      background: #e3e8ef;
-    }
-
-    .status {
-      min-height: 22px;
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .status.error {
-      color: var(--danger);
-    }
-
-    .status.ok {
-      color: var(--ok);
-    }
-
-    @media (max-width: 820px) {
-      body {
-        padding: 12px;
-      }
-
-      main {
-        min-height: auto;
-        grid-template-columns: 1fr;
-        grid-template-rows: none;
-      }
-
-      #ipResultText,
-      #asnCidrResultText {
-        min-height: 300px;
-      }
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: "#f4f6f8",
+            panel: "#ffffff",
+            ink: "#17202a",
+            muted: "#667085",
+            line: "#d9dee7",
+            accent: { DEFAULT: "#1877f2", hover: "#0f63d6" },
+            danger: "#b42318",
+            ok: "#067647",
+          },
+          fontFamily: {
+            sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Consolas', '"Liberation Mono"', 'Menlo', 'monospace'],
+          },
+          boxShadow: {
+            panel: "0 10px 32px rgba(16, 24, 40, 0.07)",
+          },
+        },
+      },
+    };
+  </script>
+  <style type="text/tailwindcss">
+    @layer base {
+      html { color-scheme: light; }
+      body { @apply bg-bg text-ink font-sans; }
+      textarea { @apply font-mono; }
+      *:focus-visible { @apply outline-none; }
     }
   </style>
 </head>
-<body>
-  <main>
-    <section>
-      <h2>ASN 转 CIDR</h2>
-      <p>输入 ASN。点击获取后，右侧窗口显示该 ASN 的 CIDR 列表。</p>
+<body class="min-h-screen p-5">
+  <main class="mx-auto grid min-h-[calc(100vh-2.5rem)] w-full max-w-[1360px] gap-4
+               grid-cols-1 grid-rows-none
+               md:grid-cols-[minmax(280px,420px)_minmax(320px,1fr)]
+               md:grid-rows-[minmax(320px,1fr)_minmax(320px,1fr)]">
 
-      <label for="asnInput">ASN</label>
-      <input id="asnInput" type="text" spellcheck="false" placeholder="AS906">
+    <!-- 左上：ASN 转 CIDR -->
+    <section class="flex flex-col rounded-lg border border-line bg-panel p-4 shadow-panel md:p-[18px]">
+      <h2 class="text-lg font-semibold tracking-tight">ASN 转 CIDR</h2>
+      <p class="mt-2 mb-4 text-sm leading-relaxed text-muted">输入 ASN。点击获取后，右侧窗口显示该 ASN 的 CIDR 列表。</p>
 
-      <div class="controls">
+      <label for="asnInput" class="mb-2 block text-sm font-semibold">ASN</label>
+      <input id="asnInput" type="text" spellcheck="false" autocomplete="off" placeholder="AS906"
+             class="w-full rounded-md border border-line bg-white px-3 py-3 font-mono text-sm text-ink outline-none
+                    focus:border-accent focus:ring-2 focus:ring-accent/14">
+
+      <div class="mt-3.5 flex flex-wrap items-center justify-between gap-2.5">
         <span></span>
-        <div class="buttons">
-          <button id="fetchAsnButton" type="button">获取 CIDR</button>
-          <button id="clearAsnButton" class="secondary" type="button">清空</button>
+        <div class="flex flex-wrap gap-2">
+          <button id="fetchAsnButton" type="button"
+                  class="rounded-md bg-accent px-3.5 py-2.5 font-bold whitespace-nowrap text-white transition-colors
+                         hover:bg-accent-hover disabled:cursor-wait disabled:opacity-72">获取 CIDR</button>
+          <button id="clearAsnButton" type="button"
+                  class="rounded-md bg-[#eef2f7] px-3.5 py-2.5 font-bold whitespace-nowrap text-ink transition-colors
+                         hover:bg-[#e3e8ef]">清空</button>
         </div>
       </div>
 
-      <div id="asnMessage" class="status" role="status" aria-live="polite"></div>
+      <div id="asnMessage" class="status mt-3 min-h-[22px] text-sm text-muted" role="status" aria-live="polite"></div>
     </section>
 
-    <section>
-      <div class="result-header">
+    <!-- 右上：CIDR 结果 -->
+    <section class="flex flex-col rounded-lg border border-line bg-panel p-4 shadow-panel md:p-[18px]">
+      <div class="mb-2.5 flex flex-wrap items-center justify-between gap-2.5">
         <div>
-          <h2>CIDR 结果</h2>
-          <p id="asnCountText">等待获取</p>
+          <h2 class="text-lg font-semibold tracking-tight">CIDR 结果</h2>
+          <p id="asnCountText" class="mt-1 text-sm text-muted">等待获取</p>
         </div>
-        <button id="copyAsnCidrButton" type="button">复制全部</button>
+        <button id="copyAsnCidrButton" type="button"
+                class="rounded-md bg-accent px-3.5 py-2.5 font-bold whitespace-nowrap text-white transition-colors
+                       hover:bg-accent-hover disabled:cursor-wait disabled:opacity-72">复制全部</button>
       </div>
-
-      <textarea id="asnCidrResultText" spellcheck="false" readonly placeholder="获取到的 CIDR 会显示在这里，每行一个。"></textarea>
+      <textarea id="asnCidrResultText" spellcheck="false" readonly
+                placeholder="获取到的 CIDR 会显示在这里，每行一个。"
+                class="min-h-[220px] flex-1 resize-none rounded-md border border-line bg-white px-3 py-3 font-mono text-sm
+                       text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/14 md:min-h-[300px]"></textarea>
     </section>
 
-    <section>
-      <h2>CIDR 转 IP</h2>
-      <p>输入一个或多个 CIDR，每行一个。点击转换后，右侧窗口显示全部 IP。</p>
+    <!-- 左下：CIDR 转 IP -->
+    <section class="flex flex-col rounded-lg border border-line bg-panel p-4 shadow-panel md:p-[18px]">
+      <h2 class="text-lg font-semibold tracking-tight">CIDR 转 IP</h2>
+      <p class="mt-2 mb-4 text-sm leading-relaxed text-muted">输入一个或多个 CIDR，每行一个。点击转换后，右侧窗口显示全部 IP。</p>
 
-      <label for="cidrInput">CIDR</label>
-      <textarea id="cidrInput" spellcheck="false" placeholder="45.59.184.0/22"></textarea>
+      <label for="cidrInput" class="mb-2 block text-sm font-semibold">CIDR</label>
+      <textarea id="cidrInput" spellcheck="false" placeholder="45.59.184.0/22"
+                class="min-h-[150px] flex-1 resize-y rounded-md border border-line bg-white px-3 py-3 font-mono text-sm
+                       text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/14"></textarea>
 
-      <div class="controls">
-        <label class="option">
-          <input id="usableOnly" type="checkbox">
+      <div class="mt-3.5 flex flex-wrap items-center justify-between gap-2.5">
+        <label class="inline-flex select-none items-center gap-2 text-sm text-muted">
+          <input id="usableOnly" type="checkbox" class="h-4 w-4">
           只输出可用主机 IP
         </label>
-        <div class="buttons">
-          <button id="convertButton" type="button">转换</button>
-          <button id="clearCidrButton" class="secondary" type="button">清空</button>
+        <div class="flex flex-wrap gap-2">
+          <button id="convertButton" type="button"
+                  class="rounded-md bg-accent px-3.5 py-2.5 font-bold whitespace-nowrap text-white transition-colors
+                         hover:bg-accent-hover disabled:cursor-wait disabled:opacity-72">转换</button>
+          <button id="clearCidrButton" type="button"
+                  class="rounded-md bg-[#eef2f7] px-3.5 py-2.5 font-bold whitespace-nowrap text-ink transition-colors
+                         hover:bg-[#e3e8ef]">清空</button>
         </div>
       </div>
 
-      <div id="cidrMessage" class="status" role="status" aria-live="polite"></div>
+      <div id="cidrMessage" class="status mt-3 min-h-[22px] text-sm text-muted" role="status" aria-live="polite"></div>
     </section>
 
-    <section>
-      <div class="result-header">
+    <!-- 右下：IP 结果 -->
+    <section class="flex flex-col rounded-lg border border-line bg-panel p-4 shadow-panel md:p-[18px]">
+      <div class="mb-2.5 flex flex-wrap items-center justify-between gap-2.5">
         <div>
-          <h2>IP 结果</h2>
-          <p id="ipCountText">等待转换</p>
+          <h2 class="text-lg font-semibold tracking-tight">IP 结果</h2>
+          <p id="ipCountText" class="mt-1 text-sm text-muted">等待转换</p>
         </div>
-        <button id="copyIpButton" type="button">复制全部</button>
+        <button id="copyIpButton" type="button"
+                class="rounded-md bg-accent px-3.5 py-2.5 font-bold whitespace-nowrap text-white transition-colors
+                       hover:bg-accent-hover disabled:cursor-wait disabled:opacity-72">复制全部</button>
       </div>
-
-      <textarea id="ipResultText" spellcheck="false" readonly placeholder="转换后的 IP 会显示在这里，每行一个。"></textarea>
+      <textarea id="ipResultText" spellcheck="false" readonly
+                placeholder="转换后的 IP 会显示在这里，每行一个。"
+                class="min-h-[220px] flex-1 resize-none rounded-md border border-line bg-white px-3 py-3 font-mono text-sm
+                       text-ink outline-none focus:border-accent focus:ring-2 focus:ring-accent/14 md:min-h-[300px]"></textarea>
     </section>
   </main>
+
+  <style>
+    /* 状态色：JS 用 "status error/ok" 字符串切类名，Tailwind CDN 无法运行时拼缀，故保留语义化片段 */
+    .status.error { color: #b42318; }
+    .status.ok { color: #067647; }
+  </style>
 
   <script>
     const asnInput = document.getElementById("asnInput");
