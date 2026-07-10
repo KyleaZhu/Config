@@ -70,7 +70,7 @@ jobs:
           os.makedirs('data', exist_ok=True)
 
           # 将生成的字典写入 data 目录下的 JSON 文件
-          with open('data/AWAvenueAdsRule.json', 'w', encoding='utf-8') as f:
+          with open('proxy-configs/AWAvenueAdsRule.json', 'w', encoding='utf-8') as f:
               json.dump(output, f, indent=2, ensure_ascii=False)
           "
 
@@ -78,5 +78,5 @@ jobs:
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/AWAvenueAdsRule.json
+          git add proxy-configs/AWAvenueAdsRule.json
           git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update AWAvenueAdsRule: $(date +'%Y-%m-%d %H:%M:%S')" && git push origin main)
