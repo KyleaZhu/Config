@@ -45,14 +45,10 @@
         { name: "腾讯云", value: "upos-sz-mirrorcosb.bilivideo.com" },
         { name: "腾讯云", value: "upos-sz-mirrorcoso1.bilivideo.com" },
         { name: "腾讯云", value: "upos-sz-mirrorcosov.bilivideo.com" },
-        { name: "腾讯云", value: "upos-sz-mirrorcosbstar1.bilivideo.com" },
         { name: "腾讯云", value: "upos-sz-estgcos.bilivideo.com" },
-        { name: "腾讯云", value: "upos-sz-staticcos.bilivideo.com" },
-        { name: "腾讯云", value: "upos-sz-staticcos-cmask.bilivideo.com" },
         { name: "七牛云", value: "upos-sz-302kodo.bilivideo.com" },
         { name: "中国电信", value: "upos-sz-mirrorzos.bilivideo.com" },
         { name: "中国电信", value: "upos-sz-mirror14b.bilivideo.com" },
-        { name: "Cloudflare", value: "upos-sz-mirrorcf1ov.bilivideo.com" },
         { name: "手动输入自定义节点", value: manualRegionName }
     ];
 
