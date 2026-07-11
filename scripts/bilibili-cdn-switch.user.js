@@ -615,12 +615,34 @@
         hostBox.appendChild(loadingDiv);
 
         let data = {};
-        try {
-            const res = await fetch('https://testingcf.jsdelivr.net/gh/KyleaZhu/Config@main/data/bili-cdn-nodes-alive.json?t=' + Date.now());
-            if (!res.ok) throw new Error('Fetch failed');
-            data = await res.json();
-        } catch (e) {
-            loadingDiv.textContent = '获取存活节点失败，请检查网络状态。';
+        let fetchSuccess = false;
+        
+        const cdnUrls = [
+            `https://gcore.jsdelivr.net/gh/KyleaZhu/Config@main/data/bili-cdn-nodes-alive.json`,
+            `https://fastly.jsdelivr.net/gh/KyleaZhu/Config@main/data/bili-cdn-nodes-alive.json`,
+            `https://cdn.jsdelivr.net/gh/KyleaZhu/Config@main/data/bili-cdn-nodes-alive.json`
+        ];
+
+        for (const url of cdnUrls) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (res.ok) {
+                    data = await res.json();
+                    fetchSuccess = true;
+                    break;
+                }
+            } catch (e) {
+                console.warn(`[CDN配置] ${new URL(url).hostname} 请求失败或超时，尝试备用节点...`);
+            }
+        }
+
+        if (!fetchSuccess) {
+            loadingDiv.textContent = '获取存活节点失败，所有CDN均不可用，请检查网络状态。';
             loadingDiv.style.color = '#ff4444';
             return;
         }
