@@ -3,6 +3,7 @@ ct.bestcf.xdu.qzz.io:443#中国电信
 cu.bestcf.xdu.qzz.io:443#中国联通
 
 visa.com:443#Visa
+animal.nuaa.tech:443
 154.17.9.159:443#DMIT
 64.186.247.120:443#GTT
 64.186.239.138:443#GTT
