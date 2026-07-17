@@ -31,8 +31,8 @@ animal.nuaa.tech:443
 64.186.243.122:10313#DMIT
 [2620:127:f00f:5::]:443#Shopify
 [2605:52c0:2:1f5b:be24:11ff:fee9:544b]:443#DMIT
-2403:18c0:1000:17d:64cc:53ff:fee7:c16c:443#DMIT
-2403:18c0:1000:427:946c:8aff:fed4:4d49:443#DMIT
+[2403:18c0:1000:17d:64cc:53ff:fee7:c16c]:443#DMIT
+[2403:18c0:1000:427:946c:8aff:fed4:4d49]:443#DMIT
 
 cf.3666888.xyz:443#胡桃优选
 saas.sin.fan:443#MIYU优选
