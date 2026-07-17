@@ -1,0 +1,5 @@
+turn://46.224.55.165:3478#DE Nuremberg[机房/机房] AS24940 Hetzner Online GmbH[4.08% 纯净]
+turn://46.224.40.124:3478#DE Falkenstein[机房/机房] AS24940 Hetzner Online GmbH[4.25% 纯净]
+turn://46.224.180.177:3478#DE Nuremberg[机房/机房] AS24940 Hetzner Online GmbH[4.08% 纯净]
+turn://46.224.13.243:3478#DE Falkenstein[机房/机房] AS24940 Hetzner Online GmbH[4.38% 纯净]
+turn://46.224.3.2:3478#DE Falkenstein[机房/机房] AS24940 Hetzner Online GmbH[4.38% 纯净]
