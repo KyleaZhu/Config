@@ -34,4 +34,5 @@ animal.nuaa.tech:443
 
 cf.3666888.xyz:443#胡桃优选
 saas.sin.fan:443#MIYU优选
-cloudflare-ip.mofashi.ltd:443#魔法师优选
+cloudflare.182682.xyz:443
+freeyx.cloudflare88.eu.org:443
