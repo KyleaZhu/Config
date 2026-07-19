@@ -3,7 +3,6 @@ ct.bestcf.xdu.qzz.io:443#中国电信
 cu.bestcf.xdu.qzz.io:443#中国联通
 
 visa.com:443#Visa
-animal.nuaa.tech:443
 45.207.157.130:443#Akile
 185.155.235.216:443#Akile
 156.231.115.96:443#Akile
