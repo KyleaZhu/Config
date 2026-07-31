@@ -8,17 +8,17 @@ export default {
   async runCheckinAndNotify(env) {
     let message = "";
     try {
-      // 第一步：根据接口进行自动登录
-      const currentCookie = await this.doLogin(env);
+      // 第一步：根据接口进行自动登录并获取 access_token
+      const accessToken = await this.doLogin(env);
 
-      // 第二步：使用登录成功拿到的新 Cookie 去签到
-      await this.doCheckin(currentCookie);
+      // 第二步：使用登录成功拿到的 access_token 去签到
+      await this.doCheckin(accessToken);
 
       // 第三步：获取签到统计数据
-      const stats = await this.getCheckinStats(currentCookie);
+      const stats = await this.getCheckinStats(accessToken);
 
       // 第四步：获取账号信息（余额、消耗、请求次数）
-      const account = await this.getAccountInfo(currentCookie);
+      const account = await this.getAccountInfo(accessToken);
 
       // 格式化通知消息
       const fmt = (n) => (n / 500000).toFixed(2);
@@ -57,6 +57,8 @@ export default {
     // 构造请求头，严格模拟浏览器行为
     const headers = {
       "accept": "application/json, text/plain, */*",
+      "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+      "cache-control": "no-store",
       "content-type": "application/json",
       "origin": "https://fast.qianxing.pro",
       "referer": "https://fast.qianxing.pro/sign-in",
@@ -79,27 +81,28 @@ export default {
       throw new Error(`登录请求失败，HTTP 状态码: ${response.status}`);
     }
 
-    // 从响应头中提取服务器颁发的 Set-Cookie
-    const setCookieHeader = response.headers.get("Set-Cookie");
-    if (!setCookieHeader) {
-      throw new Error("登录成功，但服务器未返回 Set-Cookie。请检查账号密码是否正确。");
+    const responseBody = await response.text();
+
+    let accessToken;
+    try {
+      accessToken = JSON.parse(responseBody)?.data?.access_token;
+    } catch (error) {
+      throw new Error("登录响应不是合法 JSON，无法解析 access_token");
     }
 
-    // 正则提取完整的 session=xxxxxx
-    const match = setCookieHeader.match(/session=([^;]+)/);
-    if (match) {
-      return match[0]; 
-    } else {
-      throw new Error("未能从响应头中解析出有效的 session Cookie");
+    if (!accessToken) {
+      throw new Error("登录成功但未返回 access_token");
     }
+
+    return accessToken;
   },
 
-  // 4. 自动签到
-  async doCheckin(cookie) {
+  // 4. 自动签到（使用 Bearer access_token）
+  async doCheckin(accessToken) {
     const url = "https://fast.qianxing.pro/api/user/checkin";
     const headers = {
       "accept": "application/json, text/plain, */*",
-      "cookie": cookie, // 动态传入刚刚登录获取的最新 Cookie
+      "authorization": `Bearer ${accessToken}`,
       "origin": "https://fast.qianxing.pro",
       "referer": "https://fast.qianxing.pro/console/personal",
       "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0"
@@ -112,16 +115,16 @@ export default {
     }
   },
 
-  // 5. 获取签到统计
-  async getCheckinStats(cookie) {
+  // 5. 获取签到统计（使用 Bearer access_token）
+  async getCheckinStats(accessToken) {
     const now = new Date();
     const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const url = `https://fast.qianxing.pro/api/user/checkin?month=${month}`;
     const headers = {
       "accept": "application/json, text/plain, */*",
-      "cookie": cookie,
+      "authorization": `Bearer ${accessToken}`,
       "origin": "https://fast.qianxing.pro",
-      "referer": "https://fast.qianxing.pro/console/personal",
+      "referer": "https://fast.qianxing.pro/profile",
       "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0"
     };
 
@@ -140,14 +143,14 @@ export default {
     return json.data.stats;
   },
 
-  // 6. 获取账号信息（余额、消耗、请求次数）
-  async getAccountInfo(cookie) {
+  // 6. 获取账号信息（使用 Bearer access_token）
+  async getAccountInfo(accessToken) {
     const url = "https://fast.qianxing.pro/api/user/self";
     const headers = {
       "accept": "application/json, text/plain, */*",
-      "cookie": cookie,
+      "authorization": `Bearer ${accessToken}`,
       "origin": "https://fast.qianxing.pro",
-      "referer": "https://fast.qianxing.pro/console/topup",
+      "referer": "https://fast.qianxing.pro/wallet",
       "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0"
     };
 
