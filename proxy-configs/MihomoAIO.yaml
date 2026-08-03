@@ -65,6 +65,7 @@ dns:
     - https://blog.xdu.qzz.io/cloudflare
     - https://blog.xdu.qzz.io/google
     - https://blog.xdu.qzz.io/dnssb
+    - https://doh.090227.xyz/CMLiussss
 #    - https://cloudflare-dns.com/dns-query
 #    - https://dns.google/dns-query
 #    - https://doh.dns.sb/dns-query
