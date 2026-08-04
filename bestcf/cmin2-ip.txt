@@ -1,3 +1,5 @@
 104.16.142.237#Nanjing, Jiangsu, China
 104.16.143.237#Nanjing, Jiangsu, China
 23.227.38.33#Haikou, Hainan, China
+23.227.38.74#Haikou, Hainan, China
+23.227.38.74#Hunan, China
