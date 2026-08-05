@@ -4,5 +4,8 @@
 23.227.38.33:443#Haikou, Hainan, China
 23.227.38.74:443#Haikou, Hainan, China
 23.227.38.74:443#Hunan, China
+172.67.70.250:443#Hunan, China
 23.227.38.74:443#Xinjiang, China
 23.227.38.74:443#Heilongjiang, China
+172.67.70.83:443#Tianjin, China
+172.67.70.250:443#Tianjin, China
