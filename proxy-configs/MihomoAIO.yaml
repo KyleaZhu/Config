@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-06-25
+# Date: 2026-08-11
 
 mixed-port: 7890
 unified-delay: true
@@ -99,15 +99,34 @@ imrs: &imrs {type: http, behavior: ipcidr, format: mrs, interval: 864000}
 
 proxies:
   - name: Baidu
+    type: http
     server: cloudnproxy.baidu.com
     port: 443
-    type: http
     headers:
-      Host: ascdn.baidu.com
-      Proxy-Connection: Keep-Alive
-      X-T5-Auth: 1951164069
-      User-Agent: okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)
+      Host: "ascdn.baidu.com"
+      Proxy-Connection: "Keep-Alive"
+      X-T5-Auth: "1951164069"
+      User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
     tfo: true
+
+  - name: 北京电信
+    type: http
+    server: 220.181.111.189
+    port: 443
+    headers:
+      Connection: "Keep-Alive"
+      Host: "153.3.236.22:443"
+      X-T5-Auth: "683556433"
+      User-Agent: "baiduboxapp"
+
+  - name: 保定联通
+    type: http
+    server: 110.242.70.68
+    port: 443
+    headers:
+      Connection: "Keep-Alive"
+      X-T5-Auth: "1663349750"
+      User-Agent: "baiduboxapp"
 
 proxy-providers:
   飞兔云:
@@ -151,8 +170,6 @@ rules:
   - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT
   - RULE-SET, anti-AD, REJECT
   - RULE-SET, AdRules, REJECT
-  - DomainSuffix, xdu.qzz.io, DIRECT
-  - DomainSuffix, immersivetranslate.com, DIRECT
   - GEOSITE, ai, 人工智障
   - GEOSITE, games-cn, DIRECT
   - GEOSITE, cn, DIRECT
