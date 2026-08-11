@@ -97,6 +97,18 @@ itxt: &itxt {type: http, behavior: ipcidr, format: text, interval: 864000}
 dmrs: &dmrs {type: http, behavior: domain, format: mrs, interval: 864000}
 imrs: &imrs {type: http, behavior: ipcidr, format: mrs, interval: 864000}
 
+proxies:
+  - name: Baidu
+    server: cloudnproxy.baidu.com
+    port: 443
+    type: http
+    headers:
+      Host: ascdn.baidu.com
+      Proxy-Connection: Keep-Alive
+      X-T5-Auth: 1951164069
+      User-Agent: okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)
+    tfo: true
+
 proxy-providers:
   飞兔云:
     <<: *Providers
@@ -116,7 +128,6 @@ proxy-providers:
     path: ./providers/九月鹿.yaml
     override:
       additional-prefix: "[九月鹿]"
-
   爱跨域:
     <<: *Providers
     url:
@@ -124,15 +135,8 @@ proxy-providers:
     override:
       additional-prefix: "[爱跨域]"
 
-  浮云花昔:
-    <<: *Providers
-    url:
-    path: ./providers/浮云花昔.yaml
-    override:
-      additional-prefix: "[浮云]"
-
 proxy-groups:
-  - {name: 节点选择, type: select, proxies: [香港自动, 日本自动, 坡县自动, 美国自动], icon: https://testingcf.jsdelivr.net/gh/Semporia/Hand-Painted-icon@master/Universal/Airport.png}
+  - {name: 节点选择, type: select, proxies: [Baidu, 香港自动, 日本自动, 坡县自动, 美国自动], icon: https://testingcf.jsdelivr.net/gh/Semporia/Hand-Painted-icon@master/Universal/Airport.png}
   - {name: 人工智障, <<: *Select, use: *Used, filter: *FilterUS, icon: https://testingcf.jsdelivr.net/gh/NB921/picture@main/chatgpt.png}
   - {name: 香港自动, <<: *UrlTest, use: *Used, filter: *FilterHK}
   - {name: 日本自动, <<: *UrlTest, use: *Used, filter: *FilterJP}
