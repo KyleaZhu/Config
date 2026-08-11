@@ -103,10 +103,10 @@ proxies:
     server: cloudnproxy.baidu.com
     port: 443
     headers:
-      Host: "ascdn.baidu.com"
-      Proxy-Connection: "Keep-Alive"
+      Host: ascdn.baidu.com
+      Proxy-Connection: Keep-Alive
       X-T5-Auth: "1951164069"
-      User-Agent: "okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)"
+      User-Agent: okhttp/3.11.0 SP-engine/2.71.0 Dalvik/2.1.0 (Linux; U; Android 9; HMA-AL00 Build/PQ3B.190801.002) baiduboxapp/13.33.0.11 (Baidu; P1 9)
     tfo: true
 
   - name: 北京电信
@@ -114,19 +114,20 @@ proxies:
     server: 220.181.111.189
     port: 443
     headers:
-      Connection: "Keep-Alive"
-      Host: "153.3.236.22:443"
+      Connection: Keep-Alive
+      Host: 153.3.236.22:443
       X-T5-Auth: "683556433"
-      User-Agent: "baiduboxapp"
+      User-Agent: baiduboxapp
 
   - name: 保定联通
     type: http
     server: 110.242.70.68
     port: 443
     headers:
-      Connection: "Keep-Alive"
-      X-T5-Auth: "1663349750"
-      User-Agent: "baiduboxapp"
+      Connection: Keep-Alive
+      Host: 153.3.236.22:443
+      X-T5-Auth: "683556433"
+      User-Agent: baiduboxapp
 
 proxy-providers:
   飞兔云:
