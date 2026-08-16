@@ -26,19 +26,16 @@ jobs:
           # CMCC-IP
           curl -sSL https://cf.090227.xyz/cmcc | sed 's/#.*//' | awk '{print $0 "#CMCC-IPv4_CMLiu"}' > ./bestcf/cmcc-ip.txt
           curl -sSL https://cf.090227.xyz/cmcc-ipv6 | sed 's/#.*//' | awk '{print $0 "#CMCC-IPv6_CMLiu"}' >> ./bestcf/cmcc-ip.txt
-          curl -sSL https://vps789.com/openApi/cfIpApi | jq -r '.data.CM[].ip' | awk '{print $0 "#CMCC-IPv4_VPS789"}' >> ./bestcf/cmcc-ip.txt
           curl -sSL https://api.hostmonit.com/get_optimization_ip --data-raw '{"key":"iDetkOys"}' | jq -r '.info[] | select(.line == "CM") | .ip' | awk '{print $0 "#CMCC-IPv4_CFYes"}' >> ./bestcf/cmcc-ip.txt
           curl -sSL https://api.hostmonit.com/get_optimization_ip --data-raw '{"key":"iDetkOys","type":"v6"}' | jq -r '.info[] | select(.line == "CM") | .ip' | awk '{print "["$0"]#CMCC-IPv6_CFYes"}' >> ./bestcf/cmcc-ip.txt
 
           # CUCC-IP
           curl -sSL https://cf.090227.xyz/cu | sed 's/#.*//' | awk '{print $0 "#CUCC-IPv4_CMLiu"}' > ./bestcf/cucc-ip.txt
-          curl -sSL https://vps789.com/openApi/cfIpApi | jq -r '.data.CU[].ip' | awk '{print $0 "#CUCC-IPv4_VPS789"}' >> ./bestcf/cucc-ip.txt
           curl -sSL https://api.hostmonit.com/get_optimization_ip --data-raw '{"key":"iDetkOys"}' | jq -r '.info[] | select(.line == "CU") | .ip' | awk '{print $0 "#CUCC-IPv4_CFYes"}' >> ./bestcf/cucc-ip.txt
           curl -sSL https://api.hostmonit.com/get_optimization_ip --data-raw '{"key":"iDetkOys","type":"v6"}' | jq -r '.info[] | select(.line == "CU") | .ip' | awk '{print "["$0"]#CUCC-IPv6_CFYes"}' >> ./bestcf/cucc-ip.txt
 
           # CTCC-IP
           curl -sSL https://cf.090227.xyz/ct | sed 's/#.*//' | awk '{print $0 "#CTCC-IPv4_CMLiu"}' > ./bestcf/ctcc-ip.txt
-          curl -sSL https://vps789.com/openApi/cfIpApi | jq -r '.data.CT[].ip' | awk '{print $0 "#CTCC-IPv4_VPS789"}' >> ./bestcf/ctcc-ip.txt
           curl -sSL https://api.hostmonit.com/get_optimization_ip --data-raw '{"key":"iDetkOys"}' | jq -r '.info[] | select(.line == "CT") | .ip' | awk '{print $0 "#CTCC-IPv4_CFYes"}' >> ./bestcf/ctcc-ip.txt
           curl -sSL https://api.hostmonit.com/get_optimization_ip --data-raw '{"key":"iDetkOys","type":"v6"}' | jq -r '.info[] | select(.line == "CT") | .ip' | awk '{print "["$0"]#CTCC-IPv6_CFYes"}' >> ./bestcf/ctcc-ip.txt
 
