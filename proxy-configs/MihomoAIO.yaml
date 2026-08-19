@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-08-11
+# Date: 2026-08-20
 
 mixed-port: 7890
 unified-delay: true
@@ -82,7 +82,7 @@ UrlTest: &UrlTest {type: url-test, interval: 30, tolerance: 20, lazy: true, url:
 Balance: &Balance {type: load-balance, interval: 30, lazy: true, url: 'https://connectivitycheck.gstatic.com/generate_204', strategy: consistent-hashing, hidden: true}
 FallBack: &FallBack {type: fallback, interval: 30, lazy: true, url: 'https://connectivitycheck.gstatic.com/generate_204', hidden: true}
 
-Used: &Used [飞兔云, 淘气兔, 九月鹿, 爱跨域]
+Used: &Used [飞兔云, 淘气兔, 爱跨域]
 FilterHK: &FilterHK "(?i)香港|🇭🇰|HK|Hong"
 FilterSG: &FilterSG "(?i)新加坡|🇸🇬|SG|Singapore"
 FilterJP: &FilterJP "(?i)日本|🇯🇵|JP|Japan"
@@ -110,12 +110,6 @@ proxy-providers:
     path: ./providers/淘气兔.yaml
     override:
       additional-prefix: "[淘气]"
-  九月鹿:
-    <<: *Providers
-    url:
-    path: ./providers/九月鹿.yaml
-    override:
-      additional-prefix: "[九月鹿]"
   爱跨域:
     <<: *Providers
     url:
