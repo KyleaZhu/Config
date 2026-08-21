@@ -235,13 +235,13 @@ async function handleVlessXhttp(request) {
   });
 }
 
-function notFoundResponse() {
+async function notFoundResponse() {
   return new Response(
-    "<html><head><title>404 Not Found</title></head><body><center><h1>404 Not Found</h1></center><hr><center>nginx</center></body></html>",
+    (await fetch("https://raw.githubusercontent.com/KyleaZhu/Config/main/scripts/internal-server-error.html")).body,
     {
       status: 404,
       headers: {
-        "Content-Type": "text/html; charset=UTF-8"
+        "content-type": "text/html"
       }
     }
   );
@@ -249,7 +249,7 @@ function notFoundResponse() {
 
 export default {
   async fetch(request) {
-    if (!isVlessXhttpRequest(request)) return notFoundResponse();
+    if (!isVlessXhttpRequest(request)) return await notFoundResponse();
     return handleVlessXhttp(request);
   }
 };
