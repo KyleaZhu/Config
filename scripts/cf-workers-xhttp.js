@@ -8,7 +8,7 @@ const EMPTY_BYTES = new Uint8Array(0);
 const TEXT_DECODER = new TextDecoder();
 const UUID_BYTES = Uint8Array.from(
   VLESS_UUID.replaceAll("-", "").match(/.{2}/g),
-  hex => Number.parseInt(hex, 16)
+  (hex) => Number.parseInt(hex, 16),
 );
 
 function concatBytes(left, right) {
@@ -56,7 +56,12 @@ function parseVlessRequest(buffer) {
     if (buffer.byteLength < offset + 16) return null;
     const groups = [];
     for (let index = 0; index < 8; index++) {
-      groups.push(((buffer[offset + index * 2] << 8) | buffer[offset + index * 2 + 1]).toString(16));
+      groups.push(
+        (
+          (buffer[offset + index * 2] << 8) |
+          buffer[offset + index * 2 + 1]
+        ).toString(16),
+      );
     }
     hostname = groups.join(":");
     offset += 16;
@@ -68,7 +73,7 @@ function parseVlessRequest(buffer) {
     version: buffer[0],
     hostname,
     port,
-    dataOffset: offset
+    dataOffset: offset,
   };
 }
 
@@ -82,14 +87,16 @@ async function readVlessHeader(request) {
       if (done) throw new Error("incomplete vless header");
 
       const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
-      buffered = buffered.byteLength ? concatBytes(buffered, chunk) : chunk.slice();
+      buffered = buffered.byteLength
+        ? concatBytes(buffered, chunk)
+        : chunk.slice();
 
       const parsed = parseVlessRequest(buffered);
       if (parsed) {
         reader.releaseLock();
         return {
           ...parsed,
-          initialPayload: buffered.subarray(parsed.dataOffset).slice()
+          initialPayload: buffered.subarray(parsed.dataOffset).slice(),
         };
       }
 
@@ -115,9 +122,9 @@ async function openTcpSocket(hostname, port) {
       new Promise((_, reject) => {
         timeout = setTimeout(
           () => reject(new Error("tcp connect timeout")),
-          CONNECT_TIMEOUT_MS
+          CONNECT_TIMEOUT_MS,
         );
-      })
+      }),
     ]);
     return socket;
   } catch (error) {
@@ -145,7 +152,9 @@ async function openTcpSocketWithFallback(hostname, port) {
 function isVlessXhttpRequest(request) {
   if (request.method !== "POST" || !request.body) return false;
   const contentType = request.headers.get("Content-Type");
-  return !!contentType && contentType.toLowerCase().startsWith("application/grpc");
+  return (
+    !!contentType && contentType.toLowerCase().startsWith("application/grpc")
+  );
 }
 
 async function handleVlessXhttp(request) {
@@ -171,7 +180,7 @@ async function handleVlessXhttp(request) {
   const abortController = new AbortController();
   let socketClosed = false;
 
-  const cleanup = reason => {
+  const cleanup = (reason) => {
     if (!abortController.signal.aborted) {
       try {
         abortController.abort(reason);
@@ -197,7 +206,7 @@ async function handleVlessXhttp(request) {
     }
 
     await request.body.pipeTo(socket.writable, {
-      signal: abortController.signal
+      signal: abortController.signal,
     });
   })();
 
@@ -217,7 +226,7 @@ async function handleVlessXhttp(request) {
     }
 
     await socket.readable.pipeTo(responseStream.writable, {
-      signal: abortController.signal
+      signal: abortController.signal,
     });
   })();
 
@@ -230,20 +239,24 @@ async function handleVlessXhttp(request) {
     headers: {
       "Content-Type": "application/octet-stream",
       "Cache-Control": "no-store",
-      "X-Accel-Buffering": "no"
-    }
+      "X-Accel-Buffering": "no",
+    },
   });
 }
 
 async function notFoundResponse() {
   return new Response(
-    (await fetch("https://raw.githubusercontent.com/KyleaZhu/Config/main/scripts/internal-server-error.html")).body,
+    (
+      await fetch(
+        "https://raw.githubusercontent.com/KyleaZhu/Config/main/scripts/internal-server-error.html",
+      )
+    ).body,
     {
       status: 404,
       headers: {
-        "content-type": "text/html"
-      }
-    }
+        "content-type": "text/html",
+      },
+    },
   );
 }
 
@@ -251,5 +264,5 @@ export default {
   async fetch(request) {
     if (!isVlessXhttpRequest(request)) return await notFoundResponse();
     return handleVlessXhttp(request);
-  }
+  },
 };
