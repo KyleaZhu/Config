@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-08-20
+# Date: 2026-10-17
 
 mixed-port: 7890
 unified-delay: true
@@ -28,6 +28,7 @@ profile:
 
 sniffer:
   enable: true
+  parse-pure-ip: true
   sniff:
     HTTP:
       ports: [80, 8080-8880]
@@ -37,11 +38,12 @@ sniffer:
     QUIC:
       ports: [443, 8443]
   skip-domain:
-    - 'geosite: cn, private'
+    - "geosite:cn"
+    - "geosite:private"
 
 tun:
   enable: true
-  stack: mixed
+  stack: mips
   device: mihomo
   dns-hijack:
     - "any:53"
@@ -125,11 +127,13 @@ rule-providers:
   AdRules: {<<: *dmrs, url: https://adrules.top/adrules-mihomo.mrs, path: ./ruleset/AdRules.mrs}
 
 rules:
-  - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT
-  - RULE-SET, anti-AD, REJECT
-  - RULE-SET, AdRules, REJECT
-  - GEOSITE, ai, 人工智障
-  - GEOSITE, games-cn, DIRECT
-  - GEOSITE, cn, DIRECT
-  - GEOIP, cn, DIRECT
-  - MATCH, 节点选择
+  - AND,((NETWORK,UDP),(DST-PORT,443)),REJECT-DROP
+  - RULE-SET,anti-AD,REJECT
+  - RULE-SET,AdRules,REJECT
+  - GEOSITE,ai,人工智障
+  - GEOSITE,games-cn,DIRECT
+  - GEOSITE,private,DIRECT
+  - GEOSITE,cn,DIRECT
+  - GEOIP,private,DIRECT,no-resolve
+  - GEOIP,cn,DIRECT
+  - MATCH,节点选择
