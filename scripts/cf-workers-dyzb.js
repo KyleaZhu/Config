@@ -1,7 +1,8 @@
 // Cloudflare Worker — Douyin webRid → FLV/HLS direct stream URLs
-// Usage: GET /<webRid>
-//   e.g. GET /443096978344
-// Returns JSON; does NOT proxy video streams.
+// Usage: GET /<webRid>         → JSON (API)
+//        GET /<webRid>.flv     → 302 跳最高画质 FLV 直链
+//   e.g. GET /443096978344(.flv)
+// Responses: JSON or a 302 redirect; does NOT proxy video streams.
 // Run on Cloudflare Workers (ES modules syntax).
 
 // ─── User‑Agent & Cookie (from simple_live_core) ─────────────────────────
@@ -337,15 +338,22 @@ export default {
     const reqUrl = new URL(request.url);
     const pathParts = reqUrl.pathname.split("/").filter(Boolean);
 
-    // URL 格式: /{webRid}
-    const id = pathParts.length > 0 ? pathParts[0] : null;
+    // URL 格式:/<webRid> → JSON;/<webRid>.flv → 302 跳 FLV 直链
+    const rawId = pathParts.length > 0 ? pathParts[0] : null;
 
-    if (!id) {
-      return json({ error: "缺少 webRid", usage: "GET https://host/443096978344" }, 400);
+    if (!rawId) {
+      return json({ error: "缺少 webRid", usage: "GET https://host/859811134275[.flv]" }, 400);
     }
+
+    // /<webRid>.flv → 302 重定向到 FLV 直链;/<webRid> → JSON
+    const flvReq = /\.flv$/i.test(rawId);
+    const id = flvReq ? rawId.replace(/\.flv$/i, "") : rawId;
 
     try {
       const result = await resolveByWebRid(id.trim());
+      if (flvReq) {
+        return flvRedirect(result, id);
+      }
       return json(result);
     } catch (err) {
       return json({ error: err.message || String(err) }, 500);
@@ -406,6 +414,24 @@ async function resolveByWebRid(webRid) {
     hlsUrls: qualities.filter(q => q.hls).map(q => q.hls),
     best,
   };
+}
+
+// ─── FLV redirect ────────────────────────────────────────────────────────
+function flvRedirect(result, webRid) {
+  const flv = result.flvUrls[0]; // qualities 按 level 降序,首个即最高画质
+  if (!flv) {
+    const reason = !result.live
+      ? `直播间 ${webRid} 未在直播`
+      : "该直播间没有 FLV 源,请用 JSON 接口的 hlsUrls 字段";
+    return new Response(reason, {
+      status: 404,
+      headers: corsHeaders({ "Content-Type": "text/plain; charset=utf-8" }),
+    });
+  }
+  return new Response(null, {
+    status: 302,
+    headers: corsHeaders({ "Location": flv }),
+  });
 }
 
 // ─── Parse stream qualities ──────────────────────────────────────────────
