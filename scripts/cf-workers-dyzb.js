@@ -1,4 +1,4 @@
-// Cloudflare Worker — Douyin webRid/roomId → FLV/HLS direct stream URLs
+// Cloudflare Worker — Douyin webRid → FLV/HLS direct stream URLs
 // Usage: GET /<webRid>
 //   e.g. GET /443096978344
 // Returns JSON; does NOT proxy video streams.
@@ -487,7 +487,16 @@ function generateMsToken(length) {
 }
 
 // ─── Cookie helper (get ttwid from set‑cookie) ───────────────────────────
+// ttwid changes very rarely, so cache it in module-level state instead of
+// issuing a HEAD request on every resolve.
+const COOKIE_TTL_MS = 30 * 60 * 1000;
+let cachedCookie = null;
+let cachedCookieAt = 0;
+
 async function getDouyinCookie(webRid) {
+  const now = Date.now();
+  if (cachedCookie && now - cachedCookieAt < COOKIE_TTL_MS) return cachedCookie;
+
   try {
     const resp = await fetch(`https://live.douyin.com/${webRid}`, {
       method: "HEAD",
@@ -497,13 +506,30 @@ async function getDouyinCookie(webRid) {
         "User-Agent": USER_AGENT,
       },
     });
-    const setCookie = resp.headers.get("set-cookie") ?? "";
+    // getAll("set-cookie") keeps each Set-Cookie header intact in Workers;
+    // a plain get() joins them with ", " — which also splits inside
+    // "Expires=Wed, 21 Oct ..." — so the stop-set must forbid both ";" and ","
+    // (instead of only ";" as before), and the comma-anchored boundary
+    // (?:^|,\s*) still handles a joined string as the getAll fallback.
+    const headersList = resp.headers.getAll?.("set-cookie") ?? [];
+    const lines = headersList.length > 0
+      ? headersList
+      : [resp.headers.get("set-cookie")].filter(Boolean);
     const parts = [];
     for (const name of ["ttwid", "__ac_nonce", "msToken"]) {
-      const m = setCookie.match(new RegExp(`(?:^|,\\s*)(${name}=[^;]+)`));
-      if (m) parts.push(m[1]);
+      for (const line of lines) {
+        const m = line.match(new RegExp(`(?:^|,\\s*)(${name}=[^;,]*)`));
+        if (m) { parts.push(m[1]); break; }
+      }
     }
-    return parts.length > 0 ? parts.join("; ") : DEFAULT_COOKIE;
+    // Only dynamic cookies that actually contain a ttwid are worth replacing
+    // the DEFAULT_COOKIE with; anything else would just lose the fallback.
+    if (parts.some(p => p.startsWith("ttwid="))) {
+      cachedCookie = parts.join("; ");
+      cachedCookieAt = now;
+      return cachedCookie;
+    }
+    return DEFAULT_COOKIE; // no usable ttwid — don't cache the fallback
   } catch (_) {
     return DEFAULT_COOKIE;
   }
