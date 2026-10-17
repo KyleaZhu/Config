@@ -1,18 +1,18 @@
-// Cloudflare Worker — Douyin webRid → FLV/HLS direct stream URLs
-// Usage: GET /<webRid>         → JSON (API)
-//        GET /<webRid>.flv     → 302 跳最高画质 FLV 直链
-//   e.g. GET /443096978344(.flv)
-// Responses: JSON or a 302 redirect; does NOT proxy video streams.
-// Run on Cloudflare Workers (ES modules syntax).
+// Cloudflare Worker — 抖音直播 webRid → FLV/HLS 直链解析
+// 用法:  GET /<webRid>         → JSON(接口)
+//         GET /<webRid>.flv     → 302 跳最高画质 FLV 直链
+// 示例:  GET /443096978344(.flv)
+// 返回 JSON 或 302 重定向;不代理视频流。
+// 运行于 Cloudflare Workers(ES modules 语法)。
 
-// ─── User‑Agent & Cookie (from simple_live_core) ─────────────────────────
+// ─── User‑Agent 与 Cookie(取自 simple_live_core) ─────────────────────────
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.97 Safari/537.36 Core/1.116.567.400 QQBrowser/19.7.6764.400";
 
 const DEFAULT_COOKIE =
   "ttwid=1%7CB1qls3GdnZhUov9o2NxOMxxYS2ff6OSvEWbv0ytbES4%7C1680522049%7C280d802d6d478e3e78d0c807f7c487e7ffec0ae4e5fdd6a0fe74c3c6af149511";
 
-// ─── a_bogus signing (port of simple_live_core douyin_sign.dart kABogus) ─
+// ─── a_bogus 签名(移植自 simple_live_core 的 douyin_sign.dart kABogus)─
 function rc4_encrypt(plaintext, key) {
   const s = [];
   for (let i = 0; i < 256; i++) s[i] = i;
@@ -332,7 +332,7 @@ function generate_a_bogus(url_search_params, user_agent, window_env_str) {
   return result_encrypt(result_str, "s4") + "=";
 }
 
-// ─── Worker entry ────────────────────────────────────────────────────────
+// ─── Worker 入口 ──────────────────────────────────────────────────────────
 export default {
   async fetch(request) {
     const reqUrl = new URL(request.url);
@@ -362,10 +362,10 @@ export default {
 };
 
 async function resolveByWebRid(webRid) {
-  // 1. Get dynamic cookie
+  // 1. 获取动态 Cookie
   const cookie = await getDouyinCookie(webRid);
 
-  // 2. Build API URL
+  // 2. 构造 API URL
   const apiUrl = new URL("https://live.douyin.com/webcast/room/web/enter/");
   apiUrl.searchParams.set("aid", "6383");
   apiUrl.searchParams.set("app_name", "douyin_web");
@@ -377,12 +377,12 @@ async function resolveByWebRid(webRid) {
   apiUrl.searchParams.set("browser_name", "Chrome");
   apiUrl.searchParams.set("browser_version", "125.0.0.0");
   apiUrl.searchParams.set("web_rid", webRid);
-  apiUrl.searchParams.set("msToken", ""); // will be replaced
+  apiUrl.searchParams.set("msToken", ""); // 先占位,签名函数会替换
 
-  // 3. Sign with a_bogus
+  // 3. 用 a_bogus 对 URL 签名
   const signedUrl = signDouyinUrl(apiUrl.toString());
 
-  // 4. Fetch room data
+  // 4. 拉取房间数据
   const data = await fetchJson(signedUrl, {
     "Authority": "live.douyin.com",
     "User-Agent": USER_AGENT,
@@ -416,7 +416,7 @@ async function resolveByWebRid(webRid) {
   };
 }
 
-// ─── FLV redirect ────────────────────────────────────────────────────────
+// ─── FLV 302 重定向 ───────────────────────────────────────────────────────
 function flvRedirect(result, webRid) {
   const flv = result.flvUrls[0]; // qualities 按 level 降序,首个即最高画质
   if (!flv) {
@@ -434,7 +434,7 @@ function flvRedirect(result, webRid) {
   });
 }
 
-// ─── Parse stream qualities ──────────────────────────────────────────────
+// ─── 解析清晰度列表 ───────────────────────────────────────────────────────
 function parseQualities(streamUrl) {
   const liveCore = streamUrl?.live_core_sdk_data;
   const pullData = liveCore?.pull_data;
@@ -444,7 +444,7 @@ function parseQualities(streamUrl) {
   const result = [];
 
   if (streamDataRaw && streamDataRaw.startsWith("{")) {
-    // structured stream_data (JSON)
+    // 结构化 stream_data(JSON 字符串)
     let qualityData;
     try { qualityData = JSON.parse(streamDataRaw).data ?? {}; } catch (_) { qualityData = {}; }
 
@@ -463,7 +463,7 @@ function parseQualities(streamUrl) {
       }
     }
   } else {
-    // flat flv_pull_url / hls_pull_url_map
+    // 扁平结构:flv_pull_url / hls_pull_url_map
     const flvMap = streamUrl?.flv_pull_url ?? {};
     const hlsMap = streamUrl?.hls_pull_url_map ?? {};
     const flvList = Object.values(flvMap).map(String);
@@ -491,7 +491,7 @@ function parseQualities(streamUrl) {
   return result;
 }
 
-// ─── a_bogus signing helper ──────────────────────────────────────────────
+// ─── a_bogus 签名辅助 ─────────────────────────────────────────────────────
 function signDouyinUrl(rawUrl) {
   const url = new URL(rawUrl);
   const msToken = generateMsToken(107);
@@ -512,9 +512,9 @@ function generateMsToken(length) {
   return token;
 }
 
-// ─── Cookie helper (get ttwid from set‑cookie) ───────────────────────────
-// ttwid changes very rarely, so cache it in module-level state instead of
-// issuing a HEAD request on every resolve.
+// ─── Cookie 辅助(从 set-cookie 提取 ttwid)──────────────────────────────
+// ttwid 更新频率极低,缓存到模块级变量,
+// 避免每次解析都额外发一次 HEAD 请求。
 const COOKIE_TTL_MS = 30 * 60 * 1000;
 let cachedCookie = null;
 let cachedCookieAt = 0;
@@ -532,11 +532,10 @@ async function getDouyinCookie(webRid) {
         "User-Agent": USER_AGENT,
       },
     });
-    // getAll("set-cookie") keeps each Set-Cookie header intact in Workers;
-    // a plain get() joins them with ", " — which also splits inside
-    // "Expires=Wed, 21 Oct ..." — so the stop-set must forbid both ";" and ","
-    // (instead of only ";" as before), and the comma-anchored boundary
-    // (?:^|,\s*) still handles a joined string as the getAll fallback.
+    // Workers 里 getAll("set-cookie") 会原样返回每条 Set-Cookie;
+    // 而普通 get() 会把多条用 ", " 拼接——逗号同样出现在
+    // "Expires=Wed, 21 Oct ..." 这类日期值里——所以字符集必须同时禁掉 ";" 和 ","
+    // (此前只挡 ";"),而逗号锚定的开头 (?:^|,\s*) 在 getAll 的兜底路径下仍适用。
     const headersList = resp.headers.getAll?.("set-cookie") ?? [];
     const lines = headersList.length > 0
       ? headersList
@@ -548,20 +547,20 @@ async function getDouyinCookie(webRid) {
         if (m) { parts.push(m[1]); break; }
       }
     }
-    // Only dynamic cookies that actually contain a ttwid are worth replacing
-    // the DEFAULT_COOKIE with; anything else would just lose the fallback.
+    // 动态 Cookie 只有确实包含 ttwid 才值得替换 DEFAULT_COOKIE,
+    // 否则等于丢掉兜底、毫无收益。
     if (parts.some(p => p.startsWith("ttwid="))) {
       cachedCookie = parts.join("; ");
       cachedCookieAt = now;
       return cachedCookie;
     }
-    return DEFAULT_COOKIE; // no usable ttwid — don't cache the fallback
+    return DEFAULT_COOKIE; // 没拿到可用 ttwid——兜底值不进缓存
   } catch (_) {
     return DEFAULT_COOKIE;
   }
 }
 
-// ─── HTTP helper ─────────────────────────────────────────────────────────
+// ─── HTTP 辅助 ────────────────────────────────────────────────────────────
 async function fetchJson(url, headers) {
   const resp = await fetch(url, { headers });
   const text = await resp.text();
@@ -571,7 +570,7 @@ async function fetchJson(url, headers) {
   catch (_) { throw new Error(`Response not JSON: ${text.slice(0, 300)}`); }
 }
 
-// ─── Response helpers ────────────────────────────────────────────────────
+// ─── 响应辅助 ─────────────────────────────────────────────────────────────
 function json(data, status) {
   return new Response(JSON.stringify(data, null, 2), {
     status: status ?? 200,
