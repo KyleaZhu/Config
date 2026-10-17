@@ -54,26 +54,22 @@ dns:
   enable: true
   cache-algorithm: arc
   listen: 0.0.0.0:1053
+  ipv6: false
   default-nameserver:
     - quic://223.5.5.5:853
     - quic://223.6.6.6:853
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
-    - "geosite: cn, private, fakeip-filter"
+    - "geosite:cn"
+    - "geosite:private"
+    - "geosite:fakeip-filter"
   nameserver:
     - https://blog.xdu.qzz.io/cloudflare
     - https://blog.xdu.qzz.io/google
     - https://blog.xdu.qzz.io/dnssb
-#    - https://cloudflare-dns.com/dns-query
-#    - https://dns.google/dns-query
-#    - https://doh.dns.sb/dns-query
-#  nameserver-policy:
-#    "geosite: cn":
-#      - https://dns.alidns.com/dns-query
-#      - https://sm2.doh.pub/dns-query
-#      - https://doh.360.cn/dns-query
-#      - https://doh.onedns.net/dns-query
+#    - https://dns.alidns.com/dns-query
+#    - https://sm2.doh.pub/dns-query
 
 Providers: &Providers {type: http, interval: 86400, health-check: {enable: true, url: 'https://connectivitycheck.gstatic.com/generate_204', interval: 300}, exclude-filter: '(?i)流量|倍率|轮询|群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|失联|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|特别|访问|支持|教程|关注|更新|作者|加入|COM|USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author'}
 Select: &Select {type: select, interval: 300, lazy: true, url: 'https://connectivitycheck.gstatic.com/generate_204'}
