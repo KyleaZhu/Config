@@ -4,6 +4,7 @@
  * 差异说明：
  *  - 缓存层用 Cache API（单数据中心内持久，不占 KV 配额，无需绑定任何资源）
  *  - 供体扫描的 detail 调用加了上限防 Workers 子请求超限
+ *  - 动态嗅探前端最新版本号并缓存（对齐 PHP 版 kankanApiVersion）
  *  - 其余逻辑（签名 / RSA / 三级地址回退 / m3u8 拍平 / 参数）与 PHP 版一一对应
  *
  * 已绑定自定义域: wxty.xdu.qzz.io —— 各台直播链接（?id= 取值来自 CHANNEL_MAP）:
@@ -18,7 +19,7 @@
  */
 
 const KANKAN_API_BASE = 'https://kapi.kankanews.com';
-const KANKAN_API_VERSION = '2.42.23';
+const KANKAN_API_VERSION = '2.45.2';
 const KANKAN_API_SECRET = '28c8edde3d61a0411511d3b1866f0636';
 const KANKAN_UA = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.97 Safari/537.36 SE 2.X MetaSr 1.0';
 
@@ -202,6 +203,48 @@ function getUuid(len = 21) {
 
 const CACHE = caches.default;
 const UUID_CACHE_KEY = 'https://kk-wxty.internal/cache/uuid';
+const SITE_VERSION_CACHE_KEY = 'https://kk-wxty.internal/cache/site-version';
+const SITE_VERSION_CACHE_TTL = 21600; // 6 小时 (对应 PHP 版 site-version 缓存时间)
+
+async function getKankanApiVersion(forceRefresh = false) {
+    if (!forceRefresh) {
+        try {
+            const hit = await CACHE.match(SITE_VERSION_CACHE_KEY);
+            if (hit) {
+                const v = (await hit.text()).trim();
+                if (/^\d+\.\d+\.\d+$/.test(v)) return v;
+            }
+        } catch (e) {}
+    }
+    let detected = '';
+    try {
+        const resp = await fetch('https://live.kankanews.com/huikan?id=10', {
+            headers: { 'User-Agent': KANKAN_UA },
+            cf: { cacheTtl: 0 },
+        });
+        if (resp.status === 200) {
+            const html = await resp.text();
+            const m = html.match(/v(\d+\.\d+\.\d+)\.js/);
+            if (m) detected = m[1];
+        }
+    } catch (e) {}
+
+    if (detected !== '') {
+        try {
+            await CACHE.put(SITE_VERSION_CACHE_KEY, new Response(detected, {
+                headers: { 'Cache-Control': 'max-age=' + SITE_VERSION_CACHE_TTL },
+            }));
+        } catch (e) {}
+        return detected;
+    }
+    return KANKAN_API_VERSION;
+}
+
+async function clearCachedSiteVersion() {
+    try {
+        await CACHE.delete(SITE_VERSION_CACHE_KEY);
+    } catch (e) {}
+}
 
 function liveUrlCacheKey(channelId) {
     return 'https://kk-wxty.internal/cache/live-url/channel-' + channelId + '.json';
@@ -237,13 +280,14 @@ async function kankanApiGet(path, params = {}, ip = '') {
     const t = Math.floor(Date.now() / 1000);
     const nonce = getNonce(8);
     const uuid = await getStableUuid();
+    const version = await getKankanApiVersion();
 
     const all = Object.assign({}, params, {
         'Api-Version': 'v1',
         nonce: nonce,
         platform: 'pc',
         timestamp: t,
-        version: KANKAN_API_VERSION,
+        version: version,
     });
     const keys = Object.keys(all).sort(); // ASCII 键位下与 PHP ksort 等价
     let signStr = '';
@@ -260,7 +304,7 @@ async function kankanApiGet(path, params = {}, ip = '') {
         'Nonce': nonce,
         'M-Uuid': uuid,
         'Platform': 'pc',
-        'Version': KANKAN_API_VERSION,
+        'Version': version,
         'Timestamp': String(t),
         'Sign': sign,
         'Accept': 'application/json, text/plain, */*',
@@ -523,12 +567,15 @@ async function getLiveUrl(channelId, forceRefresh = false, ip = '') {
     return { url: liveUrl, cacheHit: false, meta: meta };
 }
 
+let lastFailReason = 'unknown';
+
 function kkFail(reason) {
+    lastFailReason = reason;
     console.log('[wxty] ' + reason);
 }
 
 function redirectToFallback(reason = '', extraHeaders = {}) {
-    if (reason === '') reason = 'unknown';
+    if (reason === '') reason = lastFailReason || 'unknown';
     console.log('[wxty] fallback -> ' + FALLBACK_LIVE_URL + ' (reason: ' + reason + ')');
     const h = new Headers(extraHeaders);
     h.set('X-Fallback-Reason', reason.replace(/[^A-Za-z0-9_\-]/g, ''));
@@ -693,8 +740,9 @@ export default {
         }
 
         let finalM3u8 = await getFlatM3u8(liveUrl);
-        if (finalM3u8 === '' && cacheHit) {
+        if (finalM3u8 === '') {
             await clearCachedLiveUrl(channelId);
+            await clearCachedSiteVersion();
             liveUrlEl = await getLiveUrl(channelId, true, ip);
             liveUrl = liveUrlEl.url;
             cacheHit = liveUrlEl.cacheHit;
@@ -711,6 +759,7 @@ export default {
             const info = {
                 id: id,
                 channel_id: channelId,
+                api_version: await getKankanApiVersion(),
                 source: meta?.source ?? null,
                 kind: meta?.kind ?? null,
                 program: meta?.program ?? null,
