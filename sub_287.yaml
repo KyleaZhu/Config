@@ -1,0 +1,373 @@
+# id=287  upload=3364083330 download=48052203510 total=1099511627776 expire=1795095494
+# 本文件由 get_yaml.py 生成，仅用于授权测试
+mixed-port: 7890
+allow-lan: false
+bind-address: '*'
+mode: rule
+log-level: info
+external-controller: 127.0.0.1:9090
+proxies:
+- name: 🇭🇰Hong Kong 03｜移联
+  type: vless
+  server: aws-hk.nekocloud.pw
+  port: 42101
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: fastcdn.hoyoverse.com
+  reality-opts:
+    public-key: -weDZRzKxYceI8Kff95-FNTDcJ0yzLWcXIU9hpWoMH8
+    short-id: b4d20ee509c8
+- name: 🇭🇰Hong Kong 04｜移联
+  type: vless
+  server: aws-hk.nekocloud.pw
+  port: 42102
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: fastcdn.hoyoverse.com
+  reality-opts:
+    public-key: utN0-_rBwlGpoLMgG4l_0_4Igotw6Nd26WWCbKPDdUI
+    short-id: f2d6c068cc7f
+- name: 🇭🇰Hong Kong 07｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: hk01.neko-yes.com
+  ws-opts:
+    path: /nekocloud/hk01
+    headers:
+      Host: hk01.neko-yes.com
+- name: 🇭🇰Hong Kong 08｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: hk02.neko-yes.com
+  ws-opts:
+    path: /nekocloud/hk02
+    headers:
+      Host: hk02.neko-yes.com
+- name: 🇹🇼Taiwan 02｜移联
+  type: vless
+  server: aws-hk.nekocloud.pw
+  port: 42103
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: fastcdn.hoyoverse.com
+  reality-opts:
+    public-key: DTsBPJ-yUGK_mpxAzN7fNbZNkVIf8lWMXXhGQIUqvAg
+    short-id: e2f27c1d401e
+- name: 🇹🇼Taiwan 04｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: tw01.neko-yes.com
+  ws-opts:
+    path: /nekocloud/tw01
+    headers:
+      Host: tw01.neko-yes.com
+- name: 🇸🇬Singapore 03｜移联
+  type: vless
+  server: aws-sg.nekocloud.pw
+  port: 42104
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: osxapps.itunes.apple.com
+  reality-opts:
+    public-key: 3UxFMTpVrA3FRKRf8cERLVfcmWJpYVfK787sTlivkGI
+    short-id: 62b0bbf919af
+- name: 🇸🇬Singapore 04｜移联
+  type: vless
+  server: aws-sg.nekocloud.pw
+  port: 42105
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: osxapps.itunes.apple.com
+  reality-opts:
+    public-key: X3JhdDMPk5zhVqnwImsMzTIBTLsnz62k6wyCU5t_Z2g
+    short-id: ba64f667023c
+- name: 🇸🇬Singapore 07｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: sg01.neko-yes.com
+  ws-opts:
+    path: /nekocloud/sg01
+    headers:
+      Host: sg01.neko-yes.com
+- name: 🇸🇬Singapore 08｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: sg02.neko-yes.com
+  ws-opts:
+    path: /nekocloud/sg02
+    headers:
+      Host: sg02.neko-yes.com
+- name: 🇯🇵Japan 03｜移联
+  type: vless
+  server: aws-jp.nekocloud.pw
+  port: 42106
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: osxapps.itunes.apple.com
+  reality-opts:
+    public-key: 6Q-FS8hEcrJ46CKlu21FSRHuTaJAEfkKa4ha-Du1jn0
+    short-id: b3ebe91ab72c
+- name: 🇯🇵Japan 04｜移联
+  type: vless
+  server: aws-jp.nekocloud.pw
+  port: 42107
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: osxapps.itunes.apple.com
+  reality-opts:
+    public-key: _wHwQJA0kOHdBhajp-kGPA58dav-FraZ_oLt3F_wDE0
+    short-id: d106b26d78c9
+- name: 🇯🇵Japan 07｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: jp01.neko-yes.com
+  ws-opts:
+    path: /nekocloud/jp01
+    headers:
+      Host: jp01.neko-yes.com
+- name: 🇯🇵Japan 08｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: jp02.neko-yes.com
+  ws-opts:
+    path: /nekocloud/jp02
+    headers:
+      Host: jp02.neko-yes.com
+- name: 🇰🇷Korea 02｜移联
+  type: vless
+  server: aws-jp.nekocloud.pw
+  port: 42108
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: download-porter.hoyoverse.com
+  reality-opts:
+    public-key: KLqEDc2OQtJAFevcU7dLKF6UiQ9I3WIW660WzHb792k
+    short-id: 14267c9365
+- name: 🇰🇷Korea 04｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: kr01.neko-yes.com
+  ws-opts:
+    path: /nekocloud/kr01
+    headers:
+      Host: kr01.neko-yes.com
+- name: 🇺🇸America 03｜移联
+  type: vless
+  server: aws-us.nekocloud.pw
+  port: 42109
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: fastcdn.hoyoverse.com
+  reality-opts:
+    public-key: rDjzti-LotWwH-e2d0h_dn8QZrcFpSOgfrHboW9EW0k
+    short-id: 2efff3158d
+- name: 🇺🇸America 04｜移联
+  type: vless
+  server: aws-us.nekocloud.pw
+  port: 42110
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: tcp
+  skip-cert-verify: true
+  flow: xtls-rprx-vision
+  client-fingerprint: chrome
+  servername: fastcdn.hoyoverse.com
+  reality-opts:
+    public-key: iMiCuCFqpWJfCX0sOoRmJthxshJ1tsw80_e4Xh8xV1o
+    short-id: a364fa4238d2
+- name: 🇺🇸America 07｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: us01.neko-yes.com
+  ws-opts:
+    path: /nekocloud/us01
+    headers:
+      Host: us01.neko-yes.com
+- name: 🇺🇸America 08｜电信
+  type: vless
+  server: cf-yes.nekocloud.pw
+  port: 443
+  uuid: 6e9fb252-b77d-4cac-9784-104c5d2ebf5a
+  udp: true
+  tls: true
+  network: ws
+  skip-cert-verify: true
+  client-fingerprint: chrome
+  servername: us02.neko-yes.com
+  ws-opts:
+    path: /nekocloud/us02
+    headers:
+      Host: us02.neko-yes.com
+proxy-groups:
+- name: 选择节点
+  type: select
+  proxies:
+  - 自动选择
+  - 故障转移
+  - 🇭🇰Hong Kong 03｜移联
+  - 🇭🇰Hong Kong 04｜移联
+  - 🇭🇰Hong Kong 07｜电信
+  - 🇭🇰Hong Kong 08｜电信
+  - 🇹🇼Taiwan 02｜移联
+  - 🇹🇼Taiwan 04｜电信
+  - 🇸🇬Singapore 03｜移联
+  - 🇸🇬Singapore 04｜移联
+  - 🇸🇬Singapore 07｜电信
+  - 🇸🇬Singapore 08｜电信
+  - 🇯🇵Japan 03｜移联
+  - 🇯🇵Japan 04｜移联
+  - 🇯🇵Japan 07｜电信
+  - 🇯🇵Japan 08｜电信
+  - 🇰🇷Korea 02｜移联
+  - 🇰🇷Korea 04｜电信
+  - 🇺🇸America 03｜移联
+  - 🇺🇸America 04｜移联
+  - 🇺🇸America 07｜电信
+  - 🇺🇸America 08｜电信
+- name: 自动选择
+  type: url-test
+  proxies: &id001
+  - 🇭🇰Hong Kong 03｜移联
+  - 🇭🇰Hong Kong 04｜移联
+  - 🇭🇰Hong Kong 07｜电信
+  - 🇭🇰Hong Kong 08｜电信
+  - 🇹🇼Taiwan 02｜移联
+  - 🇹🇼Taiwan 04｜电信
+  - 🇸🇬Singapore 03｜移联
+  - 🇸🇬Singapore 04｜移联
+  - 🇸🇬Singapore 07｜电信
+  - 🇸🇬Singapore 08｜电信
+  - 🇯🇵Japan 03｜移联
+  - 🇯🇵Japan 04｜移联
+  - 🇯🇵Japan 07｜电信
+  - 🇯🇵Japan 08｜电信
+  - 🇰🇷Korea 02｜移联
+  - 🇰🇷Korea 04｜电信
+  - 🇺🇸America 03｜移联
+  - 🇺🇸America 04｜移联
+  - 🇺🇸America 07｜电信
+  - 🇺🇸America 08｜电信
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+- name: 故障转移
+  type: fallback
+  proxies: *id001
+  url: http://www.gstatic.com/generate_204
+  interval: 300
+rules:
+- DOMAIN-SUFFIX,local,DIRECT
+- IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+- IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+- IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+- IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+- GEOIP,CN,DIRECT
+- MATCH,选择节点
