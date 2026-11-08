@@ -1,7 +1,7 @@
 # Name: MihomoAllInOne
 # Designer: zhvvven
 # Version: v3
-# Date: 2026-10-17
+# Date: 2026-11-09
 
 mixed-port: 7890
 unified-delay: true
@@ -58,8 +58,9 @@ dns:
   listen: 0.0.0.0:1053
   ipv6: false
   default-nameserver:
-    - quic://223.5.5.5:853
-    - quic://223.6.6.6:853
+    - 223.5.5.5
+    - 119.29.29.29
+    - 180.184.1.1
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
   fake-ip-filter:
