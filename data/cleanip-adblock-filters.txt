@@ -1,30 +1,8 @@
-! ===== CleanIP.io 广告 =====
-! 广告容器（与站点自带 html[data-noads] 规则对齐）
-cleanip.io##.cw0bg-tiles
-cleanip.io##.cw0bg-card-wrap
-cleanip.io##.cw0bg-card
-cleanip.io##.cw0bg-rail
-cleanip.io##.cw0bg-bar-wrap
+! ===== CleanIP.io 广告：零闪烁 + 抗改版 =====
 
-! 回退规则：cw0bg 前缀改版后依然有效
-cleanip.io##aside[data-nosnippet]
-cleanip.io##section[data-nosnippet]
+! ① 让站点在 head 阶段自己开启免广告（首次访问后常驻，之后每次都是解析期生效）
+cleanip.io##+js(trusted-set-local-storage-item, cleanip:noads, 1)
+cleanip.io##+js(trusted-set-cookie, cleanip_li, 1, /)
 
-! 可选：广告素材，纯粹省流量（不影响观感）
-||static.cleanipcdn.com/images/loyalproxy.webp
-||static.cleanipcdn.com/images/bestproxy-tile.webp
-||static.cleanipcdn.com/images/008node-tile.webp
-||static.cleanipcdn.com/images/puraroute.webp
-||static.cleanipcdn.com/images/ip2up-rail.webp
-||static.cleanipcdn.com/images/proxydeal-mark.webp
-||static.cleanipcdn.com/images/proxydeal-word.webp
-||static.cleanipcdn.com/images/duoplus.webp
-||static.cleanipcdn.com/images/duoplus-mark.webp
-||static.cleanipcdn.com/images/qqg-8x1.avif
-
-! 可选：其他干扰项
-cleanip.io##.cookie-card
-cleanip.io##.friend-links-wrap
-cleanip.io##.floating-nav__link--netfish
-||stats.cleanip.io^
-||stats.proxypurity.com^
+! ② 纯 CSS 兜底：uBO 在 document_start 注入，命中即隐藏
+cleanip.io##:has(> span > button):has(> [tabindex="0"])
